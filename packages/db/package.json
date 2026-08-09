@@ -1,0 +1,43 @@
+{
+  "name": "@momentum/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "import": "./dist/schema.js"
+    }
+  },
+  "files": ["dist", "migrations"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:apply:local": "wrangler d1 migrations apply momentum-local --local --persist-to .wrangler/state",
+    "db:apply:remote": "wrangler d1 migrations apply momentum-local --remote",
+    "clean": "rm -rf dist .turbo .wrangler"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241218.0",
+    "@momentum/config": "*",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^9.17.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1",
+    "wrangler": "^3.99.0"
+  },
+  "peerDependencies": {
+    "@cloudflare/workers-types": "^4.20240000.0"
+  }
+}

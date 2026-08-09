@@ -1,0 +1,67 @@
+name = "momentum-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 binds directly — no connection string, no driver URL.
+# Local emulation: wrangler creates a SQLite-backed D1 shim under .wrangler/state.
+# Remote: bind via the dashboard or `wrangler d1 create momentum-prod` then paste the id below.
+#
+# D1 Time Travel: enabled by default on all remote D1 databases (30-day retention).
+#   wrangler d1 time-travel info <name> --timestamp <RFC3339>
+#   wrangler d1 time-travel restore <name> --bookmark <id>
+#
+# FK enforcement: D1 enables this by default remotely. For local dev,
+# createScopedDb() runs PRAGMA foreign_keys = ON on every request.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "momentum-local"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "../../packages/db/migrations"
+migrations_table = "_drizzle_migrations"
+
+# Auth + email: see .dev.vars.example for local secrets.
+# Sensitive values (BETTER_AUTH_SECRET, RESEND_API_KEY) MUST live in .dev.vars locally
+# or be set via `wrangler secret put <NAME>` for production — never inline in this file.
+[vars]
+APP_ENV = "local"
+BETTER_AUTH_URL = "http://localhost:8787"
+FROM_EMAIL = "Momentum <noreply@momentum.local>"
+
+# Observability
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+# Production environment — set D1 database_id via `wrangler secret` or dashboard.
+[env.production]
+name = "momentum-api"
+
+[env.production.vars]
+APP_ENV = "production"
+BETTER_AUTH_URL = "https://api.momentum.app"
+FROM_EMAIL = "Momentum <noreply@momentum.app>"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "momentum-prod"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "../../packages/db/migrations"
+migrations_table = "_drizzle_migrations"
+
+# Local development environment (uses wrangler --local by default).
+[env.local]
+name = "momentum-api-local"
+
+[env.local.vars]
+APP_ENV = "local"
+BETTER_AUTH_URL = "http://localhost:8787"
+FROM_EMAIL = "Momentum <noreply@momentum.local>"
+
+[[env.local.d1_databases]]
+binding = "DB"
+database_name = "momentum-local"
+database_id = "local"
+migrations_dir = "../../packages/db/migrations"
+migrations_table = "_drizzle_migrations"

@@ -1,0 +1,41 @@
+import type { Metadata, Viewport } from "next";
+import type { ReactNode } from "react";
+import { AuthProvider } from "@/lib/auth-context";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Momentum",
+  description:
+    "A task and habit tracker that computes a daily 0.0–10.0 rating from logged tasks.",
+  applicationName: "Momentum",
+  authors: [{ name: "Momentum" }],
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }]
+  }
+};
+
+export const viewport: Viewport = {
+  themeColor: "#050610",
+  width: "device-width",
+  initialScale: 1,
+  colorScheme: "dark"
+};
+
+export default function RootLayout({
+  children
+}: Readonly<{ children: ReactNode }>) {
+  return (
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className="antialiased">
+        <AuthProvider>
+          <div className="bg-orbs" aria-hidden="true">
+            <div className="bg-orb bg-orb-1" />
+            <div className="bg-orb bg-orb-2" />
+            <div className="bg-orb bg-orb-3" />
+          </div>
+          <div className="relative z-10">{children}</div>
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}

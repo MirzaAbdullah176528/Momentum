@@ -1,0 +1,16 @@
+# Local development secrets — copy this file to .dev.vars and fill in real values.
+# NEVER commit .dev.vars (it is gitignored).
+
+# Required: 32+ character random string used to sign session tokens.
+# Generate one with: openssl rand -base64 32
+BETTER_AUTH_SECRET="dev-only-change-me-to-a-real-32-char-secret-string"
+
+# Optional in local dev. If empty, the email sender becomes a no-op that logs
+# to the console instead of delivering mail. Set this to a real Resend API key
+# (re_xxx) when you want to test actual email delivery.
+RESEND_API_KEY=""
+
+# Required for Resend in production. Must be a verified sender in your Resend
+# account. The default in wrangler.toml is "Momentum <noreply@momentum.local>"
+# which only works for the dev no-op mode.
+# FROM_EMAIL="Momentum <noreply@your-verified-domain.com>"
