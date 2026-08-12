@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { createScopedDb } from "@momentum/db";
 import {
   computeDailyRating,
-  eachPktDayInRange,
+  eachPktDayInRangeWithIncludedDays,
   parsePktDateString,
   pktDateString,
   nowPktDateString
@@ -38,10 +38,10 @@ analytics.get("/daily-rating-time-series", async (c) => {
     return notFound(c, "No season found for analytics.");
   }
 
-  const activeDays = eachPktDayInRange(
+  const activeDays = eachPktDayInRangeWithIncludedDays(
     parsePktDateString(season.startDate),
     parsePktDateString(season.endDate),
-    season.weekdaysOnly
+    season.includedDays
   );
 
   const points: DailyRatingTimeSeriesPointDTO[] = [];

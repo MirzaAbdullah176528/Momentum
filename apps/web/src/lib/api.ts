@@ -19,7 +19,13 @@ import type {
   ProjectCompletionStatsResponseDTO,
   LeaderboardResponseDTO,
   UserDTO,
-  UpdateUserInputDTO
+  UpdateUserInputDTO,
+  StartChallengeInputDTO,
+  StartChallengeResultDTO,
+  StartChallengeEligibilityDTO,
+  SeasonChallengeDTO,
+  SeasonFinalGoalDTO,
+  FinalGoalInputDTO
 } from "@momentum/shared-types";
 
 export class ApiError extends Error {
@@ -170,7 +176,31 @@ export const api = {
       patchJson<SeasonDTO>(`/api/seasons/${id}`, data),
     delete: (id: string) => deleteReq<{ id: string }>(`/api/seasons/${id}`),
     rating: (id: string) =>
-      getJson<SeasonRatingDTO>(`/api/seasons/${id}/rating`)
+      getJson<SeasonRatingDTO>(`/api/seasons/${id}/rating`),
+    startEligibility: () =>
+      getJson<StartChallengeEligibilityDTO>("/api/seasons/start-eligibility"),
+    startChallenge: (data: StartChallengeInputDTO) =>
+      postJson<StartChallengeResultDTO>("/api/seasons/start", data),
+    challenge: (id: string) =>
+      getJson<SeasonChallengeDTO>(`/api/seasons/${id}/challenge`),
+    addFinalGoal: (seasonId: string, data: FinalGoalInputDTO) =>
+      postJson<SeasonFinalGoalDTO>(
+        `/api/seasons/${seasonId}/final-goals`,
+        data
+      ),
+    updateFinalGoal: (
+      seasonId: string,
+      goalId: string,
+      completed: boolean
+    ) =>
+      patchJson<SeasonFinalGoalDTO>(
+        `/api/seasons/${seasonId}/final-goals/${goalId}`,
+        { completed }
+      ),
+    deleteFinalGoal: (seasonId: string, goalId: string) =>
+      deleteReq<{ id: string }>(
+        `/api/seasons/${seasonId}/final-goals/${goalId}`
+      )
   },
 
   analytics: {

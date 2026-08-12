@@ -14,6 +14,45 @@ export const SEASON_TARGET_RATING_MAX = 10;
 export const TASK_IMPORTANCE_WEIGHT_MIN = 1;
 export const TASK_IMPORTANCE_WEIGHT_MAX = 5;
 
+/**
+ * Included-days representation: a 7-bit bitmask where bit N (the value of
+ * `Date#getDay()`, 0 = Sunday .. 6 = Saturday) is set when that weekday is
+ * counted toward a challenge. Excluded days never contribute to a season or
+ * weekly average (not even as a 0), generalizing the legacy `weekdaysOnly`
+ * boolean to any subset of weekdays.
+ */
+export const INCLUDED_DAYS_SUNDAY = 1 << 0;
+export const INCLUDED_DAYS_MONDAY = 1 << 1;
+export const INCLUDED_DAYS_TUESDAY = 1 << 2;
+export const INCLUDED_DAYS_WEDNESDAY = 1 << 3;
+export const INCLUDED_DAYS_THURSDAY = 1 << 4;
+export const INCLUDED_DAYS_FRIDAY = 1 << 5;
+export const INCLUDED_DAYS_SATURDAY = 1 << 6;
+
+/** All seven weekdays included (legacy `weekdaysOnly: false`). */
+export const INCLUDED_DAYS_ALL = 0b1111111; // 127
+/** Monday through Friday included (legacy `weekdaysOnly: true`). */
+export const INCLUDED_DAYS_MON_FRI =
+  INCLUDED_DAYS_MONDAY |
+  INCLUDED_DAYS_TUESDAY |
+  INCLUDED_DAYS_WEDNESDAY |
+  INCLUDED_DAYS_THURSDAY |
+  INCLUDED_DAYS_FRIDAY; // 62
+
+/** Number of bits used to represent included days. */
+export const INCLUDED_DAYS_BIT_COUNT = 7;
+
+/** A new season is a fixed 28-day (4-week) challenge. */
+export const SEASON_CHALLENGE_LENGTH_DAYS = 28;
+export const SEASON_CHALLENGE_WEEKS = 4;
+export const SEASON_WEEK_LENGTH_DAYS = 7;
+
+export const WEEKLY_REWARD_WEEK_MIN = 1;
+export const WEEKLY_REWARD_WEEK_MAX = 4;
+export const WEEKLY_REWARD_TEXT_MAX = 500;
+export const FINAL_GOAL_TEXT_MAX = 280;
+export const FINAL_GOALS_MAX = 50;
+
 export type PktDateString = string;
 export type IsoDateString = string;
 export type HhMmString = string;
@@ -37,7 +76,7 @@ export interface SeasonDTO {
   endDate: PktDateString;
   targetRating: number;
   rewardText: string;
-  weekdaysOnly: boolean;
+  includedDays: number;
   createdAt: IsoDateString;
   updatedAt: IsoDateString;
 }
@@ -117,7 +156,7 @@ export interface CreateSeasonInputDTO {
   endDate: PktDateString;
   targetRating: number;
   rewardText: string;
-  weekdaysOnly: boolean;
+  includedDays: number;
 }
 
 export interface UpdateSeasonInputDTO {
@@ -125,7 +164,116 @@ export interface UpdateSeasonInputDTO {
   endDate?: PktDateString;
   targetRating?: number;
   rewardText?: string;
-  weekdaysOnly?: boolean;
+  includedDays?: number;
+}
+
+/** One weekly reward target/reward, decided upfront during Start Challenge. */
+export interface WeeklyRewardDTO {
+  id: string;
+  seasonId: string;
+  weekNumber: number;
+  targetRating: number;
+  rewardText: string;
+  createdAt: IsoDateString;
+  updatedAt: IsoDateString;
+}
+
+export interface WeeklyRewardInputDTO {
+  weekNumber: number;
+  targetRating: number;
+  rewardText: string;
+}
+
+/**
+ * Resolved status of a weekly (or monthly) reward indicator.
+ * - "in_progress"  — the week has not concluded yet (some included days remain).
+ * - "achieved"     — the week concluded and its average >= target rating.
+ * - "not_achieved" — the week concluded and its average < target rating.
+ */
+export type RewardIndicatorStatus =
+  | "in_progress"
+  | "achieved"
+  | "not_achieved";
+
+export interface WeeklyRewardIndicatorDTO {
+  weekNumber: number;
+  targetRating: number;
+  rewardText: string;
+  status: RewardIndicatorStatus;
+  averageRating: number;
+  activeDayCount: number;
+  loggedDayCount: number;
+  /** Inclusive PKT date string range for this week. */
+  startDate: PktDateString;
+  endDate: PktDateString;
+}
+
+export interface MonthlyRewardIndicatorDTO {
+  status: RewardIndicatorStatus;
+  averageRating: number;
+  targetRating: number;
+  rewardText: string;
+}
+
+/** A standalone, user-defined final goal checklist item (not scored). */
+export interface SeasonFinalGoalDTO {
+  id: string;
+  seasonId: string;
+  text: string;
+  completed: boolean;
+  createdAt: IsoDateString;
+  updatedAt: IsoDateString;
+}
+
+export interface FinalGoalInputDTO {
+  text: string;
+}
+
+export interface StartChallengeInputDTO {
+  includedDays: number;
+  targetRating: number;
+  rewardText: string;
+  weeklyRewards: WeeklyRewardInputDTO[];
+  finalGoals: FinalGoalInputDTO[];
+}
+
+/**
+ * Returned by `POST /api/seasons/start`. Carries the created season together
+ * with its resolved weekly rewards and final goals so the client can render
+ * the new challenge without a second round-trip.
+ */
+export interface StartChallengeResultDTO {
+  season: SeasonDTO;
+  weeklyRewards: WeeklyRewardDTO[];
+  finalGoals: SeasonFinalGoalDTO[];
+}
+
+/**
+ * Whether the user is allowed to start a new challenge right now. `canStart`
+ * is true only when the user has no season whose date range includes or is
+ * after today.
+ */
+export interface StartChallengeEligibilityDTO {
+  canStart: boolean;
+  reason?: string;
+}
+
+/**
+ * Detailed challenge view for a single season: the running rating, the
+ * 4 weekly reward indicators, the overall (monthly) reward indicator, and the
+ * standalone final-goals checklist. Returned by
+ * `GET /api/seasons/:id/challenge`.
+ */
+export interface SeasonChallengeDTO {
+  season: SeasonDTO;
+  weeklyRewards: WeeklyRewardDTO[];
+  weeklyRewardIndicators: WeeklyRewardIndicatorDTO[];
+  monthlyRewardIndicator: MonthlyRewardIndicatorDTO;
+  finalGoals: SeasonFinalGoalDTO[];
+  runningAverage: number;
+  activeDayCount: number;
+  loggedDayCount: number;
+  missedDayCount: number;
 }
 
 export interface CreateProjectInputDTO {
@@ -180,6 +328,10 @@ export interface DailyRatingWithBreakdownDTO {
 export interface CurrentSeasonDTO {
   season: SeasonDTO;
   dailyRatings: DailyRatingDTO[];
+  weeklyRewards: WeeklyRewardDTO[];
+  weeklyRewardIndicators: WeeklyRewardIndicatorDTO[];
+  monthlyRewardIndicator: MonthlyRewardIndicatorDTO;
+  finalGoals: SeasonFinalGoalDTO[];
   runningAverage: number;
   activeDayCount: number;
   loggedDayCount: number;

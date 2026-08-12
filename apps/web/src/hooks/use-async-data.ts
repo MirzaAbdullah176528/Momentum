@@ -1,5 +1,6 @@
 "use client";
 
+import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useState } from "react";
 
 interface AsyncDataState<T> {
@@ -7,6 +8,7 @@ interface AsyncDataState<T> {
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+  setData: Dispatch<SetStateAction<T | null>>;
 }
 
 export function useAsyncData<T>(
@@ -37,5 +39,5 @@ export function useAsyncData<T>(
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, error, refetch: fetchData };
+  return { data, loading, error, refetch: fetchData, setData };
 }

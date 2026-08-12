@@ -3,6 +3,7 @@ import { PKT_UTC_OFFSET_HOURS, type PktDateString } from "@momentum/shared-types
 const PKT_OFFSET_MS = PKT_UTC_OFFSET_HOURS * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PKT_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+const WEEK_BITMASK = 0b1111111;
 
 export function toPktWallClock(date: Date): Date {
   return new Date(date.getTime() + PKT_OFFSET_MS);
@@ -29,6 +30,23 @@ export function isPktWeekend(date: Date): boolean {
   return day === 0 || day === 6;
 }
 
+/**
+ * True when the weekday of `date` (in PKT) is set in the `includedDays`
+ * 7-bit bitmask (bit N = `Date#getDay()`, 0 = Sunday .. 6 = Saturday).
+ * An excluded day never counts toward an average.
+ */
+export function isPktDayIncluded(date: Date, includedDays: number): boolean {
+  return ((includedDays & WEEK_BITMASK) >> pktWeekday(date)) % 2 === 1;
+}
+
+/** Normalizes any included-days value into a valid 7-bit bitmask. */
+export function normalizeIncludedDays(includedDays: number): number {
+  const value = Number.isFinite(includedDays) ? Math.trunc(includedDays) : 0;
+  if (value < 0) return 0;
+  if (value > WEEK_BITMASK) return WEEK_BITMASK;
+  return value;
+}
+
 export function pktDayStart(date: Date): Date {
   const pkt = toPktWallClock(date);
   const startOfPktDayUtcMs = Date.UTC(
@@ -49,6 +67,16 @@ export function pktNextDay(date: Date): Date {
 
 export function pktPreviousDay(date: Date): Date {
   return new Date(pktDayStart(date).getTime() - DAY_MS);
+}
+
+/** Returns the PKT day that is `days` calendar days after `date` (can be negative). */
+export function addPktDays(date: Date, days: number): Date {
+  return new Date(pktDayStart(date).getTime() + days * DAY_MS);
+}
+
+/** Adds `days` calendar days to a PKT date string, returning a new PKT date string. */
+export function addPktDaysToDate(dateString: PktDateString, days: number): PktDateString {
+  return pktDateString(addPktDays(parsePktDateString(dateString), days));
 }
 
 export function parsePktDateString(dateString: string): Date {
@@ -109,12 +137,52 @@ export function eachPktDayInRange(
   return days;
 }
 
+/**
+ * Returns the PKT days in `[startInclusive, endInclusive]` whose weekday bit is
+ * set in `includedDays`. Excluded days are omitted entirely (they never count
+ * toward an average). Use this in place of the legacy `weekdaysOnly` overload.
+ */
+export function eachPktDayInRangeWithIncludedDays(
+  startInclusive: Date,
+  endInclusive: Date,
+  includedDays: number
+): Date[] {
+  const mask = normalizeIncludedDays(includedDays);
+  const days: Date[] = [];
+  const startInstant = pktDayStart(startInclusive).getTime();
+  const endInstant = pktDayStart(endInclusive).getTime();
+
+  if (startInstant > endInstant) {
+    return days;
+  }
+
+  for (let t = startInstant; t <= endInstant; t += DAY_MS) {
+    const current = new Date(t);
+    if (isPktDayIncluded(current, mask)) {
+      days.push(current);
+    }
+  }
+  return days;
+}
+
 export function countPktDaysInRange(
   startInclusive: Date,
   endInclusive: Date,
   weekdaysOnly = false
 ): number {
   return eachPktDayInRange(startInclusive, endInclusive, weekdaysOnly).length;
+}
+
+export function countPktDaysInRangeWithIncludedDays(
+  startInclusive: Date,
+  endInclusive: Date,
+  includedDays: number
+): number {
+  return eachPktDayInRangeWithIncludedDays(
+    startInclusive,
+    endInclusive,
+    includedDays
+  ).length;
 }
 
 export function comparePktDateStrings(a: PktDateString, b: PktDateString): number {

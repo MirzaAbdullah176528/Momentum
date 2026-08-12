@@ -1,9 +1,13 @@
-import { eq, and, gte, lte, sql, asc } from "drizzle-orm";
+import { eq, and, gte, lte, sql, asc, inArray } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "./schema.js";
 import type {
   SeasonRow,
   SeasonInsert,
+  SeasonWeeklyRewardRow,
+  SeasonWeeklyRewardInsert,
+  SeasonFinalGoalRow,
+  SeasonFinalGoalInsert,
   ProjectRow,
   ProjectInsert,
   TaskRow,
@@ -121,7 +125,7 @@ export class ScopedDb {
         endDate: input.endDate,
         targetRating: input.targetRating,
         rewardText: input.rewardText,
-        weekdaysOnly: input.weekdaysOnly,
+        includedDays: input.includedDays,
         createdAt: ts,
         updatedAt: ts
       })
@@ -152,6 +156,171 @@ export class ScopedDb {
       .delete(schema.season)
       .where(
         and(eq(schema.season.id, id), eq(schema.season.userId, this.userId))
+      )
+      .run();
+  }
+
+  /**
+   * Returns the user's active or upcoming season relative to `todayPkt`, i.e.
+   * any season whose date range includes today OR starts on/after today. Used
+   * to decide whether the user may start a new challenge. When none exists,
+   * the user is eligible to start one.
+   */
+  async findActiveOrUpcomingSeason(
+    todayPkt: string
+  ): Promise<SeasonRow | undefined> {
+    return this.db
+      .select()
+      .from(schema.season)
+      .where(
+        and(
+          eq(schema.season.userId, this.userId),
+          gte(schema.season.endDate, todayPkt)
+        )
+      )
+      .orderBy(asc(schema.season.startDate))
+      .limit(1)
+      .get();
+  }
+
+  /**
+   * Returns the `scheduled_start` ("HH:mm", PKT wall clock) of every task the
+   * user has. Tasks in this schema are recurring daily habits (they carry a
+   * time-of-day, not a date), so "scheduled for today" means all of the user's
+   * tasks. The Start Challenge flow takes the earliest of these to resolve the
+   * season start date.
+   */
+  async scheduledStartsForPktDate(
+    _todayPkt: string
+  ): Promise<{ scheduledStart: string | null }[]> {
+    return this.db
+      .select({ scheduledStart: schema.task.scheduledStart })
+      .from(schema.task)
+      .where(eq(schema.task.userId, this.userId))
+      .all();
+  }
+
+  // --- Weekly rewards (4 per season, decided upfront) ---
+
+  async weeklyRewardsForSeason(
+    seasonId: string
+  ): Promise<SeasonWeeklyRewardRow[]> {
+    return this.db
+      .select()
+      .from(schema.seasonWeeklyReward)
+      .where(eq(schema.seasonWeeklyReward.seasonId, seasonId))
+      .orderBy(asc(schema.seasonWeeklyReward.weekNumber))
+      .all();
+  }
+
+  async insertWeeklyRewards(
+    seasonId: string,
+    rows: SeasonWeeklyRewardInsert[]
+  ): Promise<SeasonWeeklyRewardRow[]> {
+    if (rows.length === 0) return [];
+    const ts = now();
+    const payload = rows.map((row) => ({
+      id: newId(),
+      seasonId,
+      weekNumber: row.weekNumber,
+      targetRating: row.targetRating,
+      rewardText: row.rewardText,
+      createdAt: ts,
+      updatedAt: ts
+    }));
+    await this.db
+      .insert(schema.seasonWeeklyReward)
+      .values(payload)
+      .run();
+    return this.db
+      .select()
+      .from(schema.seasonWeeklyReward)
+      .where(eq(schema.seasonWeeklyReward.seasonId, seasonId))
+      .orderBy(asc(schema.seasonWeeklyReward.weekNumber))
+      .all();
+  }
+
+  // --- Final goals checklist (standalone, not scored) ---
+
+  async finalGoalsForSeason(
+    seasonId: string
+  ): Promise<SeasonFinalGoalRow[]> {
+    return this.db
+      .select()
+      .from(schema.seasonFinalGoal)
+      .where(eq(schema.seasonFinalGoal.seasonId, seasonId))
+      .orderBy(asc(schema.seasonFinalGoal.createdAt))
+      .all();
+  }
+
+  async insertFinalGoals(
+    seasonId: string,
+    rows: SeasonFinalGoalInsert[]
+  ): Promise<SeasonFinalGoalRow[]> {
+    if (rows.length === 0) return [];
+    const ts = now();
+    const payload = rows.map((row) => ({
+      id: newId(),
+      seasonId,
+      text: row.text,
+      completed: row.completed ?? false,
+      createdAt: ts,
+      updatedAt: ts
+    }));
+    await this.db
+      .insert(schema.seasonFinalGoal)
+      .values(payload)
+      .run();
+    return this.db
+      .select()
+      .from(schema.seasonFinalGoal)
+      .where(eq(schema.seasonFinalGoal.seasonId, seasonId))
+      .orderBy(asc(schema.seasonFinalGoal.createdAt))
+      .all();
+  }
+
+  async updateFinalGoalCompleted(
+    goalId: string,
+    completed: boolean
+  ): Promise<SeasonFinalGoalRow | undefined> {
+    await this.db
+      .update(schema.seasonFinalGoal)
+      .set({ completed, updatedAt: now() })
+      .where(
+        and(
+          eq(schema.seasonFinalGoal.id, goalId),
+          // scoping: ensure the goal belongs to this user via the season FK
+          inArray(
+            schema.seasonFinalGoal.seasonId,
+            this.db
+              .select({ id: schema.season.id })
+              .from(schema.season)
+              .where(eq(schema.season.userId, this.userId))
+          )
+        )
+      )
+      .run();
+    return this.db
+      .select()
+      .from(schema.seasonFinalGoal)
+      .where(eq(schema.seasonFinalGoal.id, goalId))
+      .get();
+  }
+
+  async deleteFinalGoal(goalId: string): Promise<void> {
+    await this.db
+      .delete(schema.seasonFinalGoal)
+      .where(
+        and(
+          eq(schema.seasonFinalGoal.id, goalId),
+          inArray(
+            schema.seasonFinalGoal.seasonId,
+            this.db
+              .select({ id: schema.season.id })
+              .from(schema.season)
+              .where(eq(schema.season.userId, this.userId))
+          )
+        )
       )
       .run();
   }
@@ -488,7 +657,14 @@ export async function fetchLeaderboard(
   opts: {
     seasonStartDate: string;
     seasonEndDate: string;
-    weekdaysOnly: boolean;
+    /**
+     * 7-bit included-days bitmask (bit N = `Date#getDay()`, 0 = Sunday .. 6 =
+     * Saturday). Excluded days never count toward the average. This is a
+     * cross-user approximation that uses UTC day-of-week (matching the legacy
+     * leaderboard behavior); the rating-engine remains the source of truth for
+     * precise PKT-aware averages.
+     */
+    includedDays: number;
     limit: number;
     offset: number;
   }
@@ -498,7 +674,7 @@ export async function fetchLeaderboard(
       username: schema.user.username,
       seasonId: schema.season.id,
       userId: schema.season.userId,
-      weekdaysOnly: schema.season.weekdaysOnly
+      includedDays: schema.season.includedDays
     })
     .from(schema.season)
     .innerJoin(schema.user, eq(schema.season.userId, schema.user.id))
@@ -536,7 +712,7 @@ export async function fetchLeaderboard(
         entry.userId,
         opts.seasonStartDate,
         opts.seasonEndDate,
-        Boolean(entry.weekdaysOnly)
+        Number(entry.includedDays ?? 0b1111111)
       );
       return {
         username: entry.username,
@@ -554,7 +730,7 @@ async function computeUserSeasonRatingInDb(
   userId: string,
   startDate: string,
   endDate: string,
-  weekdaysOnly: boolean
+  includedDays: number
 ): Promise<number> {
   const tasks = await db
     .select({
@@ -589,7 +765,7 @@ async function computeUserSeasonRatingInDb(
     logsByDate.set(log.date, dayMap);
   }
 
-  const activeDates = computeActiveDates(startDate, endDate, weekdaysOnly);
+  const activeDates = computeActiveDates(startDate, endDate, includedDays);
   if (activeDates.length === 0) return 0;
 
   let ratingSum = 0;
@@ -619,8 +795,11 @@ async function computeUserSeasonRatingInDb(
 function computeActiveDates(
   startDate: string,
   endDate: string,
-  weekdaysOnly: boolean
+  includedDays: number
 ): string[] {
+  const mask = Number.isFinite(includedDays)
+    ? Math.max(0, Math.min(0b1111111, Math.trunc(includedDays)))
+    : 0b1111111;
   const dates: string[] = [];
   const start = new Date(`${startDate}T00:00:00Z`);
   const end = new Date(`${endDate}T00:00:00Z`);
@@ -628,7 +807,9 @@ function computeActiveDates(
   for (let t = start.getTime(); t <= end.getTime(); t += dayMs) {
     const d = new Date(t);
     const dayOfWeek = d.getUTCDay();
-    if (!weekdaysOnly || (dayOfWeek !== 0 && dayOfWeek !== 6)) {
+    // bit N (0=Sunday..6=Saturday) set => included. Excluded days are omitted
+    // entirely (never counted, not even as 0).
+    if ((mask >> dayOfWeek) & 1) {
       const yyyy = d.getUTCFullYear();
       const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
       const dd = String(d.getUTCDate()).padStart(2, "0");

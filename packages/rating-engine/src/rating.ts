@@ -1,6 +1,7 @@
 import type { PktDateString } from "@momentum/shared-types";
 import {
-  eachPktDayInRange,
+  eachPktDayInRangeWithIncludedDays,
+  normalizeIncludedDays,
   parsePktDateString,
   pktDateString
 } from "./pkt.js";
@@ -32,7 +33,12 @@ export interface SeasonRatingInput {
   readonly dailyRatings: readonly SeasonDayRating[];
   readonly startPktDate: PktDateString;
   readonly endPktDate: PktDateString;
-  readonly weekdaysOnly: boolean;
+  /**
+   * 7-bit included-days bitmask (bit N = `Date#getDay()`, 0 = Sunday .. 6 =
+   * Saturday). Excluded days are dropped entirely — they never count toward
+   * the average (not even as a 0), generalizing the legacy `weekdaysOnly`.
+   */
+  readonly includedDays: number;
 }
 
 export interface SeasonRatingResult {
@@ -147,10 +153,10 @@ export function computeSeasonRating(
     );
   }
 
-  const activeDays = eachPktDayInRange(
+  const activeDays = eachPktDayInRangeWithIncludedDays(
     startInstant,
     endInstant,
-    input.weekdaysOnly
+    normalizeIncludedDays(input.includedDays)
   );
 
   const ratingByDate = new Map<PktDateString, number>();

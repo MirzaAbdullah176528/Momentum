@@ -5,6 +5,7 @@ import {
   computeDailyRatingForTasks,
   computeSeasonRating
 } from "./rating.js";
+import { INCLUDED_DAYS_ALL, INCLUDED_DAYS_MON_FRI } from "@momentum/shared-types";
 
 describe("computeTaskScore", () => {
   it("scores a normal partial-completion task", () => {
@@ -202,7 +203,7 @@ describe("computeSeasonRating", () => {
       ],
       startPktDate: "2024-01-01",
       endPktDate: "2024-01-04",
-      weekdaysOnly: false
+      includedDays: INCLUDED_DAYS_ALL
     });
 
     expect(result.activeDayCount).toBe(4);
@@ -216,7 +217,7 @@ describe("computeSeasonRating", () => {
       dailyRatings: [],
       startPktDate: "2024-01-01",
       endPktDate: "2024-01-07",
-      weekdaysOnly: false
+      includedDays: INCLUDED_DAYS_ALL
     });
     expect(result.activeDayCount).toBe(7);
     expect(result.loggedDayCount).toBe(0);
@@ -224,7 +225,7 @@ describe("computeSeasonRating", () => {
     expect(result.rating).toBe(0);
   });
 
-  it("counts only weekdays when weekdaysOnly=true", () => {
+  it("counts only Mon-Fri when includedDays = Mon-Fri bitmask", () => {
     const result = computeSeasonRating({
       dailyRatings: [
         { pktDate: "2024-01-01", rating: 10 },
@@ -232,12 +233,31 @@ describe("computeSeasonRating", () => {
       ],
       startPktDate: "2024-01-01",
       endPktDate: "2024-01-07",
-      weekdaysOnly: true
+      includedDays: INCLUDED_DAYS_MON_FRI
     });
     expect(result.activeDayCount).toBe(5);
     expect(result.loggedDayCount).toBe(2);
     expect(result.missedDayCount).toBe(3);
     expect(result.rating).toBeCloseTo((10 + 8) / 5, 5);
+  });
+
+  it("excludes an arbitrary subset (only Tue/Thu) from the average entirely", () => {
+    // 2024-01-01 is Mon, 02 Tue, 03 Wed, 04 Thu, 05 Fri, 06 Sat, 07 Sun.
+    // Tue = bit 2, Thu = bit 4 → (1<<2) | (1<<4) = 4 | 16 = 20.
+    const tueThu = 20;
+    const result = computeSeasonRating({
+      dailyRatings: [
+        { pktDate: "2024-01-02", rating: 10 },
+        { pktDate: "2024-01-04", rating: 6 }
+      ],
+      startPktDate: "2024-01-01",
+      endPktDate: "2024-01-07",
+      includedDays: tueThu
+    });
+    expect(result.activeDayCount).toBe(2);
+    expect(result.loggedDayCount).toBe(2);
+    expect(result.missedDayCount).toBe(0);
+    expect(result.rating).toBeCloseTo((10 + 6) / 2, 5);
   });
 
   it("treats an out-of-range daily rating as a missed day (does not contribute)", () => {
@@ -248,7 +268,7 @@ describe("computeSeasonRating", () => {
       ],
       startPktDate: "2024-01-01",
       endPktDate: "2024-01-03",
-      weekdaysOnly: false
+      includedDays: INCLUDED_DAYS_ALL
     });
     expect(result.activeDayCount).toBe(3);
     expect(result.loggedDayCount).toBe(1);
@@ -260,7 +280,7 @@ describe("computeSeasonRating", () => {
       dailyRatings: [],
       startPktDate: "2024-01-01",
       endPktDate: "2024-01-01",
-      weekdaysOnly: false
+      includedDays: INCLUDED_DAYS_ALL
     });
     expect(result.activeDayCount).toBe(1);
     expect(result.loggedDayCount).toBe(0);
@@ -273,7 +293,7 @@ describe("computeSeasonRating", () => {
         dailyRatings: [],
         startPktDate: "2024-02-01",
         endPktDate: "2024-01-01",
-        weekdaysOnly: false
+        includedDays: INCLUDED_DAYS_ALL
       })
     ).toThrowError(/must not be after end/);
   });

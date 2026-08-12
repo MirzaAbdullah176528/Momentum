@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { createDb, fetchLeaderboard } from "@momentum/db";
 import { nowPktDateString } from "@momentum/rating-engine";
+import { INCLUDED_DAYS_ALL } from "@momentum/shared-types";
 import type {
   LeaderboardResponseDTO,
   LeaderboardEntryDTO,
@@ -51,7 +52,9 @@ leaderboard.get("/", LEADERBOARD_RATE_LIMIT, async (c) => {
   const result = await fetchLeaderboard(db, {
     seasonStartDate: startDate,
     seasonEndDate: endDate,
-    weekdaysOnly: true,
+    // Each season row carries its own includedDays; this default is used only
+    // if a row is missing the value (legacy data).
+    includedDays: INCLUDED_DAYS_ALL,
     limit,
     offset
   });

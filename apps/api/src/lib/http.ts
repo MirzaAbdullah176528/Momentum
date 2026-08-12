@@ -18,6 +18,13 @@ export function forbidden(c: AppContext, message: string) {
   );
 }
 
+export function conflict(c: AppContext, message: string) {
+  return c.json<ApiResponse<never>>(
+    { ok: false, error: { code: "conflict", message } },
+    409
+  );
+}
+
 export function validationError(
   c: AppContext,
   message: string,

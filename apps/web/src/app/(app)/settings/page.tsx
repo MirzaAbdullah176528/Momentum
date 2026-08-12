@@ -6,10 +6,12 @@ import { useAsyncData } from "@/hooks/use-async-data";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { ProjectDTO, UpdateSeasonInputDTO } from "@momentum/shared-types";
+import { INCLUDED_DAYS_ALL } from "@momentum/shared-types";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { ErrorState, EmptyState } from "@/components/ui/states";
 import { Skeleton } from "@/components/ui/skeleton";
+import { IncludedDaysPicker, describeIncludedDays } from "@/components/season/included-days-picker";
 import { ProjectModal } from "@/components/tasks/project-modal";
 
 export default function SettingsPage() {
@@ -186,7 +188,7 @@ function SeasonSettingsSection({
   onRetry,
   onSaved
 }: {
-  season: { id: string; targetRating: number; rewardText: string; weekdaysOnly: boolean } | null;
+  season: { id: string; targetRating: number; rewardText: string; includedDays: number } | null;
   loading: boolean;
   error: string | null;
   onRetry: () => void;
@@ -194,7 +196,7 @@ function SeasonSettingsSection({
 }) {
   const [targetRating, setTargetRating] = useState("8.0");
   const [rewardText, setRewardText] = useState("");
-  const [weekdaysOnly, setWeekdaysOnly] = useState(true);
+  const [includedDays, setIncludedDays] = useState<number>(INCLUDED_DAYS_ALL);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -203,20 +205,24 @@ function SeasonSettingsSection({
     if (season) {
       setTargetRating(String(season.targetRating));
       setRewardText(season.rewardText);
-      setWeekdaysOnly(season.weekdaysOnly);
+      setIncludedDays(season.includedDays);
     }
   }, [season]);
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     if (!season) return;
+    if (includedDays === 0) {
+      setSaveError("Select at least one weekday to include.");
+      return;
+    }
     setSaving(true);
     setSaveError(null);
     try {
       const input: UpdateSeasonInputDTO = {
         targetRating: Number(targetRating),
         rewardText,
-        weekdaysOnly
+        includedDays
       };
       await api.seasons.update(season.id, input);
       setSaved(true);
@@ -301,24 +307,12 @@ function SeasonSettingsSection({
 
         <fieldset className="space-y-2">
           <legend className="block text-sm font-medium text-liquid-text-secondary">
-            Schedule
+            Schedule ({describeIncludedDays(includedDays)})
           </legend>
-          <label className="flex items-center gap-3 liquid-glass-subtle p-3 cursor-pointer focus-ring rounded-xl">
-            <input
-              type="checkbox"
-              checked={weekdaysOnly}
-              onChange={(e) => setWeekdaysOnly(e.target.checked)}
-              className="w-5 h-5 rounded accent-liquid-accent"
-            />
-            <div>
-              <div className="text-sm font-medium text-liquid-text">
-                Weekdays only
-              </div>
-              <div className="text-xs text-liquid-text-subtle">
-                Skip weekends (Sat/Sun) in the season average
-              </div>
-            </div>
-          </label>
+          <p className="text-xs text-liquid-text-subtle">
+            Pick which weekdays count toward your average. Excluded days never count (not even as a zero).
+          </p>
+          <IncludedDaysPicker value={includedDays} onChange={setIncludedDays} />
         </fieldset>
 
         {saveError && (

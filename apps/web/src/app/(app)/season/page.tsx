@@ -1,18 +1,26 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useAsyncData } from "@/hooks/use-async-data";
 import { api } from "@/lib/api";
 import { nowPktDateString } from "@momentum/rating-engine";
+import type { StartChallengeInputDTO } from "@momentum/shared-types";
 import { RatingBadge, RatingCell } from "@/components/ui/rating";
 import { Badge } from "@/components/ui/badge";
 import { ErrorState, EmptyState } from "@/components/ui/states";
 import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
-import { Trophy, Target, CalendarDays } from "lucide-react";
+import { StartChallengeForm } from "@/components/season/start-challenge-form";
+import { RewardIndicatorRow } from "@/components/season/reward-indicator-row";
+import { FinalGoalsSection } from "@/components/season/final-goals-section";
+import { describeIncludedDays } from "@/components/season/included-days-picker";
+import { Trophy, Target, CalendarDays, Rocket } from "lucide-react";
 
 export default function SeasonPage() {
   const today = useMemo(() => nowPktDateString(), []);
   const seasonData = useAsyncData(() => api.seasons.current(), []);
+  const [showStartForm, setShowStartForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
 
   const season = seasonData.data;
 
@@ -39,6 +47,40 @@ export default function SeasonPage() {
     return weeks;
   }, [season]);
 
+  const handleStartChallenge = async (input: StartChallengeInputDTO) => {
+    setSubmitting(true);
+    setStartError(null);
+    try {
+      await api.seasons.startChallenge(input);
+      await seasonData.refetch();
+      setShowStartForm(false);
+    } catch (err) {
+      setStartError(
+        err instanceof Error ? err.message : "Could not start the challenge."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAddFinalGoal = async (text: string) => {
+    if (!season) return;
+    await api.seasons.addFinalGoal(season.season.id, { text });
+    await seasonData.refetch();
+  };
+
+  const handleToggleFinalGoal = async (goalId: string, completed: boolean) => {
+    if (!season) return;
+    await api.seasons.updateFinalGoal(season.season.id, goalId, completed);
+    await seasonData.refetch();
+  };
+
+  const handleDeleteFinalGoal = async (goalId: string) => {
+    if (!season) return;
+    await api.seasons.deleteFinalGoal(season.season.id, goalId);
+    await seasonData.refetch();
+  };
+
   if (seasonData.loading) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
@@ -61,14 +103,49 @@ export default function SeasonPage() {
     );
   }
 
+  // No active season → show the Start Challenge flow.
   if (!season) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-6">
-        <EmptyState
-          icon={<CalendarDays className="w-6 h-6 text-liquid-accent" />}
-          title="No active season"
-          message="Create a season in Settings to start tracking your daily ratings over time and work toward a reward."
-        />
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+        <header className="space-y-2">
+          <h1 className="text-2xl font-bold text-liquid-text">Season</h1>
+          <p className="text-sm text-liquid-text-muted">
+            No active challenge. Start a 28-day challenge to begin tracking.
+          </p>
+        </header>
+
+        {!showStartForm ? (
+          <section className="liquid-glass-strong p-8 space-y-4 text-center">
+            <EmptyState
+              icon={<CalendarDays className="w-6 h-6 text-liquid-accent" />}
+              title="No active challenge"
+              message="Pick your days, set 4 weekly targets, an overall goal, and a final-goals checklist — then begin."
+            />
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setStartError(null);
+                  setShowStartForm(true);
+                }}
+                className="inline-flex items-center gap-2 h-12 px-6 rounded-xl text-base font-medium bg-liquid-accent text-white shadow-lg shadow-liquid-accent/30 hover:bg-liquid-accent/90 active:scale-[0.98] transition-all"
+              >
+                <Rocket className="w-4 h-4" aria-hidden="true" />
+                Start Challenge
+              </button>
+            </div>
+          </section>
+        ) : (
+          <StartChallengeForm
+            onSubmit={handleStartChallenge}
+            onCancel={() => {
+              setShowStartForm(false);
+              setStartError(null);
+            }}
+            submitting={submitting}
+            error={startError}
+          />
+        )}
       </div>
     );
   }
@@ -82,7 +159,8 @@ export default function SeasonPage() {
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
       <header className="space-y-2">
         <p className="text-sm text-liquid-text-muted">
-          {season.season.startDate} → {season.season.endDate}
+          {season.season.startDate} → {season.season.endDate} ·{" "}
+          {describeIncludedDays(season.season.includedDays)}
         </p>
         <h1 className="text-2xl font-bold text-liquid-text">Season Overview</h1>
       </header>
@@ -159,6 +237,37 @@ export default function SeasonPage() {
         </div>
       </section>
 
+      {/* 5-indicator reward row: Week 1, Week 2, Week 3, Week 4, Overall */}
+      <section
+        className="liquid-glass p-6 space-y-4"
+        aria-labelledby="rewards-heading"
+      >
+        <div className="flex items-center justify-between">
+          <h2
+            id="rewards-heading"
+            className="text-lg font-semibold text-liquid-text"
+          >
+            Rewards
+          </h2>
+          <span className="text-xs text-liquid-text-subtle">
+            Overall reward: {season.season.rewardText}
+          </span>
+        </div>
+        <RewardIndicatorRow
+          weeklyIndicators={season.weeklyRewardIndicators}
+          monthlyIndicator={season.monthlyRewardIndicator}
+        />
+      </section>
+
+      {/* Standalone final goals checklist */}
+      <FinalGoalsSection
+        seasonId={season.season.id}
+        goals={season.finalGoals}
+        onAdd={handleAddFinalGoal}
+        onToggle={handleToggleFinalGoal}
+        onDelete={handleDeleteFinalGoal}
+      />
+
       <section
         className="liquid-glass p-6 space-y-4"
         aria-labelledby="calendar-heading"
@@ -170,9 +279,6 @@ export default function SeasonPage() {
           >
             Daily Ratings
           </h2>
-          <div className="text-sm text-liquid-text-muted">
-            Reward: {season.season.rewardText}
-          </div>
         </div>
 
         <div className="overflow-x-auto scrollbar-thin">
@@ -232,3 +338,4 @@ export default function SeasonPage() {
     </div>
   );
 }
+

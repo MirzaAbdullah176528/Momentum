@@ -14,11 +14,17 @@ export type TaskUnit = (typeof TASK_UNITS)[number];
 
 export const DEFAULT_PROJECT_COLOR = "#808080";
 export const DEFAULT_TIMEZONE = "Asia/Karachi";
-export const DEFAULT_WEEKDAYS_ONLY = true;
+export const DEFAULT_INCLUDED_DAYS = 0b1111111; // all 7 weekdays
 export const SEASON_TARGET_RATING_MIN = 0;
 export const SEASON_TARGET_RATING_MAX = 10;
 export const TASK_IMPORTANCE_WEIGHT_MIN = 1;
 export const TASK_IMPORTANCE_WEIGHT_MAX = 5;
+export const WEEKLY_REWARD_WEEK_MIN = 1;
+export const WEEKLY_REWARD_WEEK_MAX = 4;
+export const WEEKLY_REWARD_TEXT_MAX = 500;
+export const FINAL_GOAL_TEXT_MAX = 280;
+export const FINAL_GOALS_MAX = 50;
+export const SEASON_CHALLENGE_LENGTH_DAYS = 28;
 
 const timestampColumn = (name: string) =>
   integer(name, { mode: "timestamp" })
@@ -104,9 +110,14 @@ export const season = sqliteTable(
     endDate: text("end_date").notNull(),
     targetRating: real("target_rating").notNull(),
     rewardText: text("reward_text").notNull(),
-    weekdaysOnly: integer("weekdays_only", { mode: "boolean" })
+    /**
+     * 7-bit included-days bitmask (bit N = `Date#getDay()`,
+     * 0 = Sunday .. 6 = Saturday). Replaces the legacy `weekdays_only`
+     * boolean. Excluded days never count toward a season/weekly average.
+     */
+    includedDays: integer("included_days")
       .notNull()
-      .default(DEFAULT_WEEKDAYS_ONLY),
+      .default(DEFAULT_INCLUDED_DAYS),
     createdAt: timestampColumn("created_at"),
     updatedAt: timestampColumn("updated_at")
   },
@@ -116,8 +127,58 @@ export const season = sqliteTable(
     check(
       "season_target_rating_range",
       sql`"target_rating" >= 0 AND "target_rating" <= 10`
+    ),
+    check(
+      "season_included_days_range",
+      sql`"included_days" >= 0 AND "included_days" <= 127`
     )
   ]
+);
+
+export const seasonWeeklyReward = sqliteTable(
+  "season_weekly_reward",
+  {
+    id: text("id").primaryKey(),
+    seasonId: text("season_id")
+      .notNull()
+      .references(() => season.id, { onDelete: "cascade" }),
+    weekNumber: integer("week_number").notNull(),
+    targetRating: real("target_rating").notNull(),
+    rewardText: text("reward_text").notNull(),
+    createdAt: timestampColumn("created_at"),
+    updatedAt: timestampColumn("updated_at")
+  },
+  (table) => [
+    uniqueIndex("uniq_weekly_reward_season_week").on(
+      table.seasonId,
+      table.weekNumber
+    ),
+    check(
+      "weekly_reward_week_number_range",
+      sql`${table.weekNumber} >= 1 AND ${table.weekNumber} <= 4`
+    ),
+    check(
+      "weekly_reward_target_rating_range",
+      sql`"target_rating" >= 0 AND "target_rating" <= 10`
+    )
+  ]
+);
+
+export const seasonFinalGoal = sqliteTable(
+  "season_final_goal",
+  {
+    id: text("id").primaryKey(),
+    seasonId: text("season_id")
+      .notNull()
+      .references(() => season.id, { onDelete: "cascade" }),
+    text: text("text").notNull(),
+    completed: integer("completed", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    createdAt: timestampColumn("created_at"),
+    updatedAt: timestampColumn("updated_at")
+  },
+  (table) => [index("idx_final_goal_season").on(table.seasonId)]
 );
 
 export const project = sqliteTable(
@@ -212,6 +273,10 @@ export type VerificationRow = typeof verification.$inferSelect;
 export type VerificationInsert = typeof verification.$inferInsert;
 export type SeasonRow = typeof season.$inferSelect;
 export type SeasonInsert = typeof season.$inferInsert;
+export type SeasonWeeklyRewardRow = typeof seasonWeeklyReward.$inferSelect;
+export type SeasonWeeklyRewardInsert = typeof seasonWeeklyReward.$inferInsert;
+export type SeasonFinalGoalRow = typeof seasonFinalGoal.$inferSelect;
+export type SeasonFinalGoalInsert = typeof seasonFinalGoal.$inferInsert;
 export type ProjectRow = typeof project.$inferSelect;
 export type ProjectInsert = typeof project.$inferInsert;
 export type TaskRow = typeof task.$inferSelect;
