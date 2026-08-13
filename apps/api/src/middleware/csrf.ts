@@ -16,6 +16,10 @@ function getAllowedOrigins(env: { APP_ENV?: string; BETTER_AUTH_URL?: string }):
   return [...origins];
 }
 
+function isLocalDev(env: { APP_ENV?: string }): boolean {
+  return env.APP_ENV !== "production";
+}
+
 export const csrfMiddleware = (): MiddlewareHandler => {
   return async (c, next) => {
     if (!MUTATING_METHODS.has(c.req.method)) {
@@ -38,7 +42,12 @@ export const csrfMiddleware = (): MiddlewareHandler => {
     }
 
     const allowed = getAllowedOrigins(c.env as { APP_ENV?: string; BETTER_AUTH_URL?: string });
-    if (!allowed.includes(origin)) {
+    // In local dev the web app is often served from a different origin than the
+    // API (e.g. a tunnel host). CSRF protection still requires an Origin header
+    // to be present (which browsers always send for cross-site mutating
+    // requests), so we accept any non-empty Origin locally. Production keeps the
+    // strict allow-list above.
+    if (!allowed.includes(origin) && !isLocalDev(c.env as { APP_ENV?: string })) {
       return c.json(
         {
           ok: false as const,

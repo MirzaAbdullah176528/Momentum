@@ -143,11 +143,6 @@ function finalGoalRowToDto(row: {
 
 export const seasons = new Hono<AppContext>();
 
-seasons.onError((err, c) => {
-  console.error(err);
-  return c.json({ error: err.message }, 500);
-})
-
 seasons.get("/", async (c) => {
   const scoped = await createScopedDb(c.env.DB, c.get("userId"));
   const rows = await scoped.seasons();
@@ -156,33 +151,18 @@ seasons.get("/", async (c) => {
 
 seasons.get("/current", async (c) => {
   const scoped = await createScopedDb(c.env.DB, c.get("userId"));
-
-  function nowPktDateString(): string {
-    return new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Karachi",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date());
-  }
-
   const todayPkt = nowPktDateString();
-
-  if (!todayPkt) {
-    throw new Error("todayPkt is EMPTY");
-
-  } else if (todayPkt.length !== 0) {
-    console.log("todayPkt:", todayPkt);
-
-  }
-  console.log("I am here");
   const season = await scoped.currentSeason(todayPkt);
+
+  // No active season is a normal state (the UI shows the Start Challenge
+  // flow), not an error — return null so the frontend doesn't treat it as one.
+  if (!season) return ok<CurrentSeasonDTO | null>(c, null);
 
   const dailyRatings = await computeDailyRatingsForRange(
     scoped,
-    season ? season.startDate : "",
-    season ? season.endDate : "",
-    season ? season.includedDays : 0
+    season.startDate,
+    season.endDate,
+    season.includedDays
   );
 
   const computed = computeSeasonRating({
@@ -215,7 +195,7 @@ seasons.get("/current", async (c) => {
 
   const finalGoals = await scoped.finalGoalsForSeason(season.id);
 
-  const todayInstant = todayPkt as any as Date;
+  const todayInstant = parsePktDateString(todayPkt);
   const activeDays = eachPktDayInRangeWithIncludedDays(
     parsePktDateString(season.startDate),
     parsePktDateString(season.endDate),
@@ -241,8 +221,7 @@ seasons.get("/current", async (c) => {
     daysRemaining: remainingDays
   };
 
-  return ok(c as unknown as AppContext, result);
-
+  return ok(c, result);
 });
 
 seasons.get("/start-eligibility", async (c) => {
