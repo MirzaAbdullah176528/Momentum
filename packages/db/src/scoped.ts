@@ -574,6 +574,10 @@ export class ScopedDb {
   }
 
   async currentSeason(todayPkt: string): Promise<SeasonRow | undefined> {
+  
+    if(todayPkt === undefined || todayPkt === null || todayPkt === ""){
+      throw new Error("todayPkt is undefined or null");
+    } else{
     return this.db
       .select()
       .from(schema.season)
@@ -587,6 +591,7 @@ export class ScopedDb {
       .limit(1)
       .get();
   }
+}
 
   async taskLogsForDateRange(
     startDate: string,
@@ -779,9 +784,9 @@ async function computeUserSeasonRatingInDb(
         actual === null || actual <= 0
           ? 0
           : Math.min(
-              (actual / task.targetValue) * task.importanceWeight,
-              task.importanceWeight
-            );
+            (actual / task.targetValue) * task.importanceWeight,
+            task.importanceWeight
+          );
       totalScore += score;
       totalWeight += task.importanceWeight;
     }

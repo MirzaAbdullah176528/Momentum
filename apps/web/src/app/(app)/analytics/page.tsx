@@ -75,18 +75,8 @@ export default function AnalyticsPage() {
 
         {timeSeriesData.loading ? (
           <Skeleton className="h-64 w-full" />
-        ) : timeSeriesData.error ? (
-          <ErrorState
-            title="Couldn't load trend"
-            message={timeSeriesData.error}
-            onRetry={timeSeriesData.refetch}
-          />
-        ) : chartData.length === 0 ? (
-          <EmptyState
-            title="No data yet"
-            message="Log some tasks to see your rating trend over time."
-          />
-        ) : (
+        ) 
+        : (
           <div
             role="img"
             aria-label={`Daily rating trend chart showing ${chartData.length} data points from ${chartData[0]?.date} to ${chartData[chartData.length - 1]?.date}. Average rating: ${timeSeriesData.data?.averageRating.toFixed(2)}`}
