@@ -1,24 +1,27 @@
+import type { Context } from "hono";
 import type { AppContext, ApiResponse } from "../types.js";
 
-export function ok<T>(c: AppContext, data: T, status: 200 | 201 = 200) {
+type Ctx = Context<AppContext>;
+
+export function ok<T>(c: Ctx, data: T, status: 200 | 201 = 200) {
   return c.json<ApiResponse<T>>({ ok: true, data }, status);
 }
 
-export function notFound(c: AppContext, message: string) {
+export function notFound(c: Ctx, message: string) {
   return c.json<ApiResponse<never>>(
     { ok: false, error: { code: "not_found", message } },
     404
   );
 }
 
-export function forbidden(c: AppContext, message: string) {
+export function forbidden(c: Ctx, message: string) {
   return c.json<ApiResponse<never>>(
     { ok: false, error: { code: "forbidden", message } },
     403
   );
 }
 
-export function conflict(c: AppContext, message: string) {
+export function conflict(c: Ctx, message: string) {
   return c.json<ApiResponse<never>>(
     { ok: false, error: { code: "conflict", message } },
     409
@@ -26,7 +29,7 @@ export function conflict(c: AppContext, message: string) {
 }
 
 export function validationError(
-  c: AppContext,
+  c: Ctx,
   message: string,
   details: unknown
 ) {
@@ -36,7 +39,7 @@ export function validationError(
   );
 }
 
-export function internalError(c: AppContext, message: string) {
+export function internalError(c: Ctx, message: string) {
   return c.json<ApiResponse<never>>(
     { ok: false, error: { code: "internal_error", message } },
     500

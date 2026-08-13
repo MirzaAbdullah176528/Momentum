@@ -9,6 +9,15 @@ const config: NextConfig = {
   typedRoutes: true,
   eslint: {
     ignoreDuringBuilds: true
+  },
+  async rewrites() {
+    const apiTarget = process.env.API_PROXY_TARGET ?? "http://localhost:8787";
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${apiTarget}/api/:path*`
+      }
+    ];
   }
 };
 

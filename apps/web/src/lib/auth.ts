@@ -5,7 +5,7 @@ import type { BetterAuthOptions } from "better-auth";
 const baseURL =
   process.env.NEXT_PUBLIC_BETTER_AUTH_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
-  "http://localhost:8787";
+  "";
 
 type ServerOptions = BetterAuthOptions & {
   user: {

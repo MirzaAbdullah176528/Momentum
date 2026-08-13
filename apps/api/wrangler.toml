@@ -28,6 +28,7 @@ migrations_table = "_drizzle_migrations"
 APP_ENV = "local"
 BETTER_AUTH_URL = "http://localhost:8787"
 FROM_EMAIL = "Momentum <noreply@momentum.local>"
+WEB_DEV_ORIGINS = "https://work-1-csgfigyebrwxckrp.prod-runtime.all-hands.dev,https://work-2-csgfigyebrwxckrp.prod-runtime.all-hands.dev,http://localhost:12000,http://127.0.0.1:12000"
 
 # Observability
 [observability]
@@ -58,6 +59,7 @@ name = "momentum-api-local"
 APP_ENV = "local"
 BETTER_AUTH_URL = "http://localhost:8787"
 FROM_EMAIL = "Momentum <noreply@momentum.local>"
+WEB_DEV_ORIGINS = "https://work-1-csgfigyebrwxckrp.prod-runtime.all-hands.dev,https://work-2-csgfigyebrwxckrp.prod-runtime.all-hands.dev,http://localhost:12000,http://127.0.0.1:12000"
 
 [[env.local.d1_databases]]
 binding = "DB"

@@ -15,7 +15,7 @@ import type {
   ApiResponse
 } from "@momentum/shared-types";
 import type { AppContext } from "../types.js";
-import { ok, notFound, validationError } from "../lib/http.js";
+import { ok, validationError } from "../lib/http.js";
 
 export const analytics = new Hono<AppContext>();
 
@@ -35,7 +35,10 @@ analytics.get("/daily-rating-time-series", async (c) => {
   }
 
   if (!season) {
-    return notFound(c, "No season found for analytics.");
+    // No active season is a normal state (e.g. before a user starts their
+    // first challenge). Return null instead of 404 so the UI can render its
+    // empty state rather than an error.
+    return ok<DailyRatingTimeSeriesDTO | null>(c, null);
   }
 
   const activeDays = eachPktDayInRangeWithIncludedDays(
@@ -93,7 +96,8 @@ analytics.get("/project-completion-stats", async (c) => {
   }
 
   if (!season) {
-    return notFound(c, "No season found for analytics.");
+    // No active season — normal pre-challenge state, not an error.
+    return ok<ProjectCompletionStatsResponseDTO | null>(c, null);
   }
 
   const projects = await scoped.projects();

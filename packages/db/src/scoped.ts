@@ -574,10 +574,6 @@ export class ScopedDb {
   }
 
   async currentSeason(todayPkt: string): Promise<SeasonRow | undefined> {
-  
-    if(todayPkt === undefined || todayPkt === null || todayPkt === ""){
-      throw new Error("todayPkt is undefined or null");
-    } else{
     return this.db
       .select()
       .from(schema.season)
@@ -591,7 +587,6 @@ export class ScopedDb {
       .limit(1)
       .get();
   }
-}
 
   async taskLogsForDateRange(
     startDate: string,

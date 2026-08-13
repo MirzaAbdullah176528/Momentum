@@ -57,7 +57,13 @@ export function buildAuthOptions(env: Env) {
   const trustedOrigins = [
     baseUrl,
     "http://localhost:3000",
-    "http://127.0.0.1:3000"
+    "http://127.0.0.1:3000",
+    // Allow any local dev origin the web app may be served from (tunnel hosts,
+    // alternate ports). Production keeps BETTER_AUTH_URL only via baseUrl above.
+    ...(env.APP_ENV !== "production"
+      ? (env.WEB_DEV_ORIGINS?.split(",").map((s) => s.trim()).filter(Boolean) ??
+        [])
+      : [])
   ].filter((url): url is string => Boolean(url));
 
   return betterAuth({

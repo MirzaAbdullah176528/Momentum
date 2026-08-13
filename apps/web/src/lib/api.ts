@@ -44,7 +44,7 @@ async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8787";
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
   const url = `${baseUrl}${path}`;
 
   const headers: Record<string, string> = {
@@ -168,7 +168,7 @@ export const api = {
 
   seasons: {
     list: () => getJson<SeasonDTO[]>("/api/seasons"),
-    current: () => getJson<CurrentSeasonDTO>("/api/seasons/current"),
+    current: () => getJson<CurrentSeasonDTO | null>("/api/seasons/current"),
     get: (id: string) => getJson<SeasonDTO>(`/api/seasons/${id}`),
     create: (data: CreateSeasonInputDTO) =>
       postJson<SeasonDTO>("/api/seasons", data),
@@ -205,13 +205,13 @@ export const api = {
 
   analytics: {
     dailyRatingTimeSeries: (seasonId?: string) =>
-      getJson<DailyRatingTimeSeriesDTO>(
+      getJson<DailyRatingTimeSeriesDTO | null>(
         `/api/analytics/daily-rating-time-series${
           seasonId ? `?seasonId=${seasonId}` : ""
         }`
       ),
     projectCompletionStats: (seasonId?: string) =>
-      getJson<ProjectCompletionStatsResponseDTO>(
+      getJson<ProjectCompletionStatsResponseDTO | null>(
         `/api/analytics/project-completion-stats${
           seasonId ? `?seasonId=${seasonId}` : ""
         }`

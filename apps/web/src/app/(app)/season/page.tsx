@@ -91,17 +91,17 @@ export default function SeasonPage() {
     );
   }
 
-  // if (seasonData.error) {
-  //   return (
-  //     <div className="max-w-5xl mx-auto px-4 py-6">
-  //       <ErrorState
-  //         title="Couldn't load season"
-  //         message={seasonData.error}
-  //         onRetry={seasonData.refetch}
-  //       />
-  //     </div>
-  //   );
-  // }
+  if (seasonData.error) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-6">
+        <ErrorState
+          title="Couldn't load season"
+          message={seasonData.error}
+          onRetry={seasonData.refetch}
+        />
+      </div>
+    );
+  }
 
   // No active season → show the Start Challenge flow.
   if (!season) {

@@ -55,6 +55,7 @@ export interface Env {
   RESEND_API_KEY: string;
   FROM_EMAIL: string;
   APP_ENV: "local" | "production";
+  WEB_DEV_ORIGINS?: string;
 }
 
 export interface AppContext {
