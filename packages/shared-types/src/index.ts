@@ -4,7 +4,7 @@ export const RATING_PRECISION = 2;
 export const PKT_IANA_TIMEZONE = "Asia/Karachi";
 export const PKT_UTC_OFFSET_HOURS = 5;
 
-export const TASK_UNITS = ["km", "hours", "pages", "reps", "count"] as const;
+export const TASK_UNITS = ["km", "hours", "pages", "reps", "count", "calories"] as const;
 export type TaskUnit = (typeof TASK_UNITS)[number];
 
 export const DEFAULT_PROJECT_COLOR = "#808080";

@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
-export const TASK_UNITS = ["km", "hours", "pages", "reps", "count"] as const;
+export const TASK_UNITS = ["km", "hours", "pages", "reps", "count", "calories"] as const;
 export type TaskUnit = (typeof TASK_UNITS)[number];
 
 export const DEFAULT_PROJECT_COLOR = "#808080";
@@ -232,7 +232,7 @@ export const task = sqliteTable(
     ),
     check(
       "task_unit_valid",
-      sql`${table.unit} IN ('km', 'hours', 'pages', 'reps', 'count')`
+      sql`${table.unit} IN ('km', 'hours', 'pages', 'reps', 'count', 'calories')`
     ),
     check(
       "task_importance_weight_range",

@@ -30,6 +30,13 @@
 - `CurrentSeasonDTO.canEditLockedFields` (bool) is computed in seasons `/current` as `season.startDate === todayPkt`; web `TaskModal` takes a `canEditLockedFields` prop and unlocks the inputs + sends the fields on PATCH when editing.
 - Verification: `scripts/verify-day1-unlock.sh` (needs `wrangler dev` on 8787 + the local D1 sqlite path; manipulates season start_date directly to force day-1 vs day-2 vs no-season). 16/16 checks pass.
 
+## Task units
+- `TASK_UNITS` lives in BOTH `packages/shared-types/src/index.ts` (source of truth for API Zod validation + web dropdown) AND `packages/db/src/schema.ts` (Drizzle check constraint `task_unit_valid`). Keep both in sync — there is no single shared constant between them.
+- Values: `km, hours, pages, reps, count, calories` (calories added via migration `0002_add_calories_unit.sql`).
+- D1 `task.unit` is a plain `text NOT NULL` with a CHECK constraint restricting it to the enum. Changing the enum requires a SQLite table-rebuild migration (drizzle-kit generates `__new_task` + copy + drop + rename) — there is no `ALTER TABLE … DROP CHECK` in SQLite.
+- Web dropdown (`task-modal.tsx`) derives options from `TASK_UNITS`, so adding a unit there needs no separate UI edit.
+- `@momentum/shared-types` and `@momentum/db` ship a compiled `dist/` (package.json `main`/`exports` point at `dist`); the API worker bundles from dist, so after editing source you MUST rebuild both (`npm run build` in each) before `wrangler dev` picks up the change. `scripts/verify-calories-unit.sh` exercises create+log+score for the calories unit (8/8).
+
 ## Pre-existing characteristic (NOT a regression, out of scope to change)
 - `computeSeasonRating` divides rating sum by `activeDayCount` = ALL included days across full season range, INCLUDING future unelapsed days. So a "running average" early in a season is dragged toward 0 by future days. This was the behavior before the includedDays change too. The prompt explicitly asked to preserve exact averaging behavior and only generalize day-exclusion.
 

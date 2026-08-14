@@ -15,6 +15,13 @@
       "when": 1786206000000,
       "tag": "0001_challenge_season",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1786701976193,
+      "tag": "0002_add_calories_unit",
+      "breakpoints": true
     }
   ]
 }
