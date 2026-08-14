@@ -149,6 +149,14 @@ export interface UpdateTaskInputDTO {
   sortOrder?: number;
   scheduledStart?: HhMmString;
   scheduledEnd?: HhMmString;
+  /**
+   * Locked by default after creation. Only accepted on the first day of the
+   * user's active season (today == season.startDate in PKT); the API enforces
+   * this query-time and rejects these fields with 403 on any other day.
+   */
+  targetValue?: number;
+  unit?: TaskUnit;
+  importanceWeight?: number;
 }
 
 export interface CreateSeasonInputDTO {
@@ -339,6 +347,10 @@ export interface CurrentSeasonDTO {
   targetRating: number;
   rewardAchieved: boolean;
   daysRemaining: number;
+  /** True when today (PKT) equals this season's startDate — the one-day window
+   * during which a task's locked fields (targetValue/unit/importanceWeight)
+   * may be edited. False on every other day and when there's no active season. */
+  canEditLockedFields: boolean;
 }
 
 export interface DailyRatingTimeSeriesPointDTO {

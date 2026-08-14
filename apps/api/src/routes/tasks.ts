@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { createScopedDb } from "@momentum/db";
+import { nowPktDateString } from "@momentum/rating-engine";
 import {
   TASK_UNITS,
   TASK_IMPORTANCE_WEIGHT_MIN,
@@ -19,6 +20,15 @@ import { MUTATING_ENDPOINT_RATE_LIMIT } from "../middleware/rate-limit.js";
 
 const HH_MM_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 
+/** Fields that are immutable after task creation, except on the first day of
+ * the user's active season (today == season.startDate in PKT), when they may
+ * be edited for that one day. Kept in sync with the unlock check below. */
+const LOCKED_TASK_FIELDS = [
+  "targetValue",
+  "unit",
+  "importanceWeight"
+] as const;
+
 const createTaskSchema = z.object({
   projectId: z.string().min(1),
   title: z.string().min(1).max(280),
@@ -34,15 +44,41 @@ const createTaskSchema = z.object({
   scheduledEnd: z.string().regex(HH_MM_REGEX)
 });
 
-const updateTaskSchema = z
+// Always-editable fields. Locked fields are merged in conditionally below.
+const editableTaskFields = {
+  title: z.string().min(1).max(280).optional(),
+  sortOrder: z.number().int().optional(),
+  scheduledStart: z.string().regex(HH_MM_REGEX).optional(),
+  scheduledEnd: z.string().regex(HH_MM_REGEX).optional()
+};
+
+// When the season-day-1 unlock does NOT apply, locked fields reject anything
+// (z.never) so sending them yields a 403 "immutable" error — the existing
+// behavior. projectId is also never() here since project reassignment is a
+// separate concern handled elsewhere and is not part of this exception.
+const updateTaskSchemaLocked = z
   .object({
-    title: z.string().min(1).max(280).optional(),
-    sortOrder: z.number().int().optional(),
-    scheduledStart: z.string().regex(HH_MM_REGEX).optional(),
-    scheduledEnd: z.string().regex(HH_MM_REGEX).optional(),
+    ...editableTaskFields,
     targetValue: z.never().optional(),
     unit: z.never().optional(),
     importanceWeight: z.never().optional(),
+    projectId: z.never().optional()
+  })
+  .strict();
+
+// When the season-day-1 unlock DOES apply, locked fields are accepted (with
+// the same validation as creation) and persisted. projectId remains never().
+const updateTaskSchemaUnlocked = z
+  .object({
+    ...editableTaskFields,
+    targetValue: z.number().positive().optional(),
+    unit: z.enum(TASK_UNITS).optional(),
+    importanceWeight: z
+      .number()
+      .int()
+      .min(TASK_IMPORTANCE_WEIGHT_MIN)
+      .max(TASK_IMPORTANCE_WEIGHT_MAX)
+      .optional(),
     projectId: z.never().optional()
   })
   .strict();
@@ -127,26 +163,49 @@ tasks.post("/", MUTATING_ENDPOINT_RATE_LIMIT, async (c) => {
 });
 
 tasks.patch("/:id", MUTATING_ENDPOINT_RATE_LIMIT, async (c) => {
-  const parsed = updateTaskSchema.safeParse(await c.req.json());
+  const scoped = await createScopedDb(c.env.DB, c.get("userId"));
+  const id = c.req.param("id");
+
+  // Season-day-1 unlock (query-time, not stored): the user's locked task fields
+  // (targetValue/unit/importanceWeight) become editable only when today, in PKT,
+  // equals the startDate of their currently active season. A user with no active
+  // season falls back to always-immutable.
+  const todayPkt = nowPktDateString();
+  const activeSeason = await scoped.currentSeason(todayPkt);
+  const canEditLockedFields = Boolean(
+    activeSeason && activeSeason.startDate === todayPkt
+  );
+  const schema = canEditLockedFields
+    ? updateTaskSchemaUnlocked
+    : updateTaskSchemaLocked;
+
+  const parsed = schema.safeParse(await c.req.json());
   if (!parsed.success) {
     const issues = parsed.error.issues;
-    const attemptedImmutable = issues.find(
-      (i) => i.code === "invalid_type" && i.path.length > 0
-    );
-    if (attemptedImmutable) {
-      const field = attemptedImmutable.path[0];
-      return forbidden(
-        c,
-        `Field '${field}' is immutable and cannot be changed after task creation.`
+    // When locked, a present-but-forbidden field surfaces as an invalid_type
+    // issue (from z.never()); map that to a 403 "immutable" so the behavior
+    // matches the existing contract on every non-day-1 day. While unlocked,
+    // the same fields parse as real validators and produce plain validation
+    // errors instead.
+    if (!canEditLockedFields) {
+      const attemptedImmutable = issues.find(
+        (i) =>
+          i.code === "invalid_type" &&
+          i.path.length > 0 &&
+          (LOCKED_TASK_FIELDS as readonly string[]).includes(String(i.path[0]))
       );
+      if (attemptedImmutable) {
+        const field = attemptedImmutable.path[0];
+        return forbidden(
+          c,
+          `Field '${field}' is immutable and cannot be changed after task creation.`
+        );
+      }
     }
     return validationError(c, "Invalid update payload.", parsed.error.flatten());
   }
 
   const input: UpdateTaskInputDTO = parsed.data;
-  const scoped = await createScopedDb(c.env.DB, c.get("userId"));
-  const id = c.req.param("id");
-
   const existing = await scoped.taskById(id);
   if (!existing) return notFound(c, `Task ${id} not found.`);
 

@@ -184,7 +184,7 @@ check "bob PATCH alice's task → 404" "404" "$BOB_PATCH_CODE"
 
 info ""
 info "=== 15. Alice creates a season ==="
-SEASON_PAYLOAD=$(python3 -c "import json; print(json.dumps({'startDate':'2024-01-01','endDate':'2024-01-31','targetRating':8.0,'rewardText':'New keyboard','weekdaysOnly':True}))")
+SEASON_PAYLOAD=$(python3 -c "import json; print(json.dumps({'startDate':'2024-01-01','endDate':'2024-01-31','targetRating':8.0,'rewardText':'New keyboard','includedDays':62}))")
 SEASON_BODY=$(post_json "$API/api/seasons" "$COOKIE_JAR_1" "$SEASON_PAYLOAD")
 SEASON_ID=$(echo "$SEASON_BODY" | head -n -1 | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['id'])")
 SEASON_CODE=$(echo "$SEASON_BODY" | tail -n1)
