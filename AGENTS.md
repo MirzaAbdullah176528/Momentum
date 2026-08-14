@@ -22,6 +22,14 @@
 - Week N range: [start+7(N-1), start+7N-1]. Week "concluded" once now > end of week's last PKT day. Until then status=`in_progress`.
 - Reward indicators: 5-cell row (Week1-4 + Overall), green when average≥target AND concluded.
 
+## Task immutability + first-day-of-season edit exception
+- Tasks are immutable after creation for `targetValue`, `unit`, `importanceWeight` (the only locked fields that exist in this codebase — there is NO `scaleType` field anywhere; if a prompt mentions it, it doesn't apply here).
+- EXCEPTION: on the first day of the user's active season — i.e. when `todayPkt === currentSeason.startDate` — those three fields become editable for that one day. Implemented as a QUERY-TIME check in the PATCH /api/tasks/:id handler (no stored flag), so it auto-closes at midnight PKT.
+- API impl: `updateTaskSchemaLocked` (locked fields = `z.never()` → sending one yields 403 "immutable", matching the original contract) vs `updateTaskSchemaUnlocked` (locked fields accept real validators + persist). Schema is chosen per-request after looking up `scoped.currentSeason(todayPkt)`.
+- `UpdateTaskInputDTO` now includes optional `targetValue/unit/importanceWeight`. `TaskUpdateInput` in db/scoped.ts no longer omits them, so `scoped.updateTask` persists them.
+- `CurrentSeasonDTO.canEditLockedFields` (bool) is computed in seasons `/current` as `season.startDate === todayPkt`; web `TaskModal` takes a `canEditLockedFields` prop and unlocks the inputs + sends the fields on PATCH when editing.
+- Verification: `scripts/verify-day1-unlock.sh` (needs `wrangler dev` on 8787 + the local D1 sqlite path; manipulates season start_date directly to force day-1 vs day-2 vs no-season). 16/16 checks pass.
+
 ## Pre-existing characteristic (NOT a regression, out of scope to change)
 - `computeSeasonRating` divides rating sum by `activeDayCount` = ALL included days across full season range, INCLUDING future unelapsed days. So a "running average" early in a season is dragged toward 0 by future days. This was the behavior before the includedDays change too. The prompt explicitly asked to preserve exact averaging behavior and only generalize day-exclusion.
 

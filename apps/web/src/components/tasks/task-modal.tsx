@@ -9,7 +9,8 @@ import {
   type TaskDTO,
   type TaskUnit,
   type ProjectDTO,
-  type CreateTaskInputDTO
+  type CreateTaskInputDTO,
+  type UpdateTaskInputDTO
 } from "@momentum/shared-types";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,10 @@ interface TaskModalProps {
   projects: ProjectDTO[];
   task?: TaskDTO | null;
   defaultProjectId?: string;
+  /** When true (and editing), the task's normally-locked fields
+   * (target/unit/importanceWeight) become editable. This is the season-day-1
+   * unlock window; false on every other day and when there's no active season. */
+  canEditLockedFields?: boolean;
 }
 
 const HH_MM_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -33,9 +38,13 @@ export function TaskModal({
   onSaved,
   projects,
   task,
-  defaultProjectId
+  defaultProjectId,
+  canEditLockedFields = false
 }: TaskModalProps) {
   const isEditing = Boolean(task);
+  // Locked fields are only editable when editing an existing task during the
+  // season-day-1 unlock window.
+  const lockedFieldsEditable = isEditing && canEditLockedFields;
   const [projectId, setProjectId] = useState(defaultProjectId ?? "");
   const [title, setTitle] = useState("");
   const [targetValue, setTargetValue] = useState("");
@@ -76,11 +85,23 @@ export function TaskModal({
 
     try {
       if (isEditing && task) {
-        await api.tasks.update(task.id, {
+        const update: UpdateTaskInputDTO = {
           title,
           scheduledStart,
           scheduledEnd
-        });
+        };
+        if (lockedFieldsEditable) {
+          const target = Number(targetValue);
+          if (!Number.isFinite(target) || target <= 0) {
+            setError("Target value must be a positive number.");
+            setSaving(false);
+            return;
+          }
+          update.targetValue = target;
+          update.unit = unit;
+          update.importanceWeight = Number(importanceWeight);
+        }
+        await api.tasks.update(task.id, update);
       } else {
         const target = Number(targetValue);
         if (!Number.isFinite(target) || target <= 0) {
@@ -153,15 +174,15 @@ export function TaskModal({
             value={targetValue}
             onChange={(e) => setTargetValue(e.target.value)}
             placeholder="5"
-            disabled={isEditing}
-            required={!isEditing}
+            disabled={isEditing && !lockedFieldsEditable}
+            required={!isEditing || lockedFieldsEditable}
           />
           <Select
             label="Unit"
             value={unit}
             onChange={(e) => setUnit(e.target.value as TaskUnit)}
             options={TASK_UNITS.map((u) => ({ value: u, label: u }))}
-            disabled={isEditing}
+            disabled={isEditing && !lockedFieldsEditable}
           />
         </div>
 
@@ -174,17 +195,23 @@ export function TaskModal({
             step="1"
             value={importanceWeight}
             onChange={(e) => setImportanceWeight(e.target.value)}
-            disabled={isEditing}
-            required={!isEditing}
+            disabled={isEditing && !lockedFieldsEditable}
+            required={!isEditing || lockedFieldsEditable}
           />
           <div className="space-y-1.5">
             <span className="block text-sm font-medium text-liquid-text-secondary">
               <Lock className="w-3 h-3 inline mr-1" aria-hidden="true" />
-              {isEditing ? "Locked" : "Set at creation"}
+              {isEditing
+                ? lockedFieldsEditable
+                  ? "Editable today"
+                  : "Locked"
+                : "Set at creation"}
             </span>
             <div className="h-[42px] flex items-center px-4 text-xs text-liquid-text-subtle rounded-xl border border-liquid-border bg-white/[0.02]">
               {isEditing
-                ? "Immutable after creation"
+                ? lockedFieldsEditable
+                  ? "Season day 1 — locked fields editable today"
+                  : "Immutable after creation"
                 : "Choose carefully — cannot change later"}
             </div>
           </div>
@@ -211,12 +238,12 @@ export function TaskModal({
           <div className="rounded-xl border border-liquid-border bg-white/[0.02] p-3 space-y-1">
             <p className="text-xs font-medium text-liquid-text-secondary flex items-center gap-1.5">
               <Lock className="w-3 h-3" aria-hidden="true" />
-              Immutable fields
+              {lockedFieldsEditable ? "Season day 1" : "Immutable fields"}
             </p>
             <p className="text-xs text-liquid-text-subtle">
-              Target ({task?.targetValue} {task?.unit}), unit, and importance
-              weight ({task?.importanceWeight}) are locked. Delete and recreate
-              the task to change them.
+              {lockedFieldsEditable
+                ? `Target (${task?.targetValue} ${task?.unit}), unit, and importance weight (${task?.importanceWeight}) are editable today only — the first day of your active season.`
+                : `Target (${task?.targetValue} ${task?.unit}), unit, and importance weight (${task?.importanceWeight}) are locked. Delete and recreate the task to change them.`}
             </p>
           </div>
         )}

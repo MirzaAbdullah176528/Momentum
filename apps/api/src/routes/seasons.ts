@@ -218,7 +218,8 @@ seasons.get("/current", async (c) => {
     missedDayCount: computed.missedDayCount,
     targetRating: season.targetRating,
     rewardAchieved: computed.rating >= season.targetRating,
-    daysRemaining: remainingDays
+    daysRemaining: remainingDays,
+    canEditLockedFields: season.startDate === todayPkt
   };
 
   return ok(c, result);

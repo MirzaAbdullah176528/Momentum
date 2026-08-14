@@ -42,14 +42,7 @@ type TaskCreateInput = Omit<
 type TaskUpdateInput = Partial<
   Omit<
     TaskInsert,
-    | "id"
-    | "userId"
-    | "projectId"
-    | "createdAt"
-    | "updatedAt"
-    | "targetValue"
-    | "unit"
-    | "importanceWeight"
+    "id" | "userId" | "projectId" | "createdAt" | "updatedAt"
   >
 >;
 
