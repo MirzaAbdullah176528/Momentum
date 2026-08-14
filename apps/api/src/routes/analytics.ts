@@ -12,6 +12,8 @@ import type {
   DailyRatingTimeSeriesPointDTO,
   ProjectCompletionStatsResponseDTO,
   ProjectCompletionStatsDTO,
+  TaskUnit,
+  ScaleType,
   ApiResponse
 } from "@momentum/shared-types";
 import type { AppContext } from "../types.js";
@@ -57,7 +59,9 @@ analytics.get("/daily-rating-time-series", async (c) => {
       tasksWithLogs.map(({ task, log }) => ({
         actualValue: log?.actualValue ?? null,
         targetValue: task.targetValue,
-        importanceWeight: task.importanceWeight
+        importanceWeight: task.importanceWeight,
+        unit: task.unit as TaskUnit,
+        scaleType: task.scaleType as ScaleType
       })),
       dateKey
     );

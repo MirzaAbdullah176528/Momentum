@@ -7,6 +7,29 @@ export const PKT_UTC_OFFSET_HOURS = 5;
 export const TASK_UNITS = ["km", "hours", "pages", "reps", "count", "calories"] as const;
 export type TaskUnit = (typeof TASK_UNITS)[number];
 
+/**
+ * How a task's `actualValue` maps to a score. Persisted per task on the
+ * `scale_type` column (default "target"); an explicit value always wins over
+ * the unit-derived default in `resolveScaleType`.
+ * - "target"      — more is better, proportional to target, capped at the
+ *   importance weight (default for km/hours/pages/reps/count).
+ * - "limit"       — target is an upper cap; meeting/coming in under it earns
+ *   the full importance weight, any overage reduces the score
+ *   (`weight * (1 - overageRatio)`). Default for the "calories" unit, since a
+ *   calorie target is a daily intake limit, not a goal to exceed.
+ * - "avoid"       — a binary "did you avoid the thing today?" toggle. Avoiding
+ *   (`actualValue === 0`) earns the full importance weight; slipping
+ *   (`actualValue > 0`) scores 0; an unlogged day scores 0 (consistent with the
+ *   incomplete-task rule).
+ * - "restriction" — target is an upper cap whose penalty depends on the unit:
+ *   for `unit === "count"` it is strict pass/fail (at/under target ⇒ full
+ *   weight, over by even one ⇒ 0); for every other unit it uses the same
+ *   graduated formula as "limit". Use cases: "restrict social media to at most
+ *   1 hour a day" (hours) or "check phone at most once a day" (count).
+ */
+export const SCALE_TYPES = ["target", "limit", "avoid", "restriction"] as const;
+export type ScaleType = (typeof SCALE_TYPES)[number];
+
 export const DEFAULT_PROJECT_COLOR = "#808080";
 export const DEFAULT_TIMEZONE = "Asia/Karachi";
 export const SEASON_TARGET_RATING_MIN = 0;
@@ -97,6 +120,7 @@ export interface TaskDTO {
   title: string;
   targetValue: number;
   unit: TaskUnit;
+  scaleType: ScaleType;
   importanceWeight: number;
   sortOrder: number;
   scheduledStart: HhMmString;
@@ -138,6 +162,7 @@ export interface CreateTaskInputDTO {
   title: string;
   targetValue: number;
   unit: TaskUnit;
+  scaleType?: ScaleType;
   importanceWeight: number;
   sortOrder?: number;
   scheduledStart: HhMmString;
@@ -156,6 +181,7 @@ export interface UpdateTaskInputDTO {
    */
   targetValue?: number;
   unit?: TaskUnit;
+  scaleType?: ScaleType;
   importanceWeight?: number;
 }
 

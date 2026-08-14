@@ -99,6 +99,310 @@ describe("computeTaskScore", () => {
   });
 });
 
+describe("computeTaskScore — limit scale (calories)", () => {
+  // The exact case from the spec: target 2000, weight 5, 100 over must reduce
+  // the score visibly — it must NOT be silently rounded away to the full 5.
+  it("reduces points for a small overage (2000 target, 2100 actual, weight 5 → 4.75)", () => {
+    const score = computeTaskScore({
+      actualValue: 2100,
+      targetValue: 2000,
+      importanceWeight: 5,
+      unit: "calories"
+    });
+    expect(score).toBeCloseTo(4.75, 5);
+    expect(score).not.toBe(5);
+    expect(score).toBeLessThan(5);
+    expect(score).toBeGreaterThan(0);
+  });
+
+  it("derives the limit scale from unit=calories even without an explicit scaleType", () => {
+    // overageRatio = (2100 - 2000) / 2000 = 0.05 → 5 * (1 - 0.05) = 4.75
+    const score = computeTaskScore({
+      actualValue: 2100,
+      targetValue: 2000,
+      importanceWeight: 5,
+      unit: "calories"
+    });
+    expect(score).toBeCloseTo(4.75, 5);
+  });
+
+  it("earns the full weight when meeting the target exactly", () => {
+    const score = computeTaskScore({
+      actualValue: 2000,
+      targetValue: 2000,
+      importanceWeight: 5,
+      unit: "calories"
+    });
+    expect(score).toBe(5);
+  });
+
+  it("earns the full weight when coming in under the limit", () => {
+    const score = computeTaskScore({
+      actualValue: 1500,
+      targetValue: 2000,
+      importanceWeight: 5,
+      unit: "calories"
+    });
+    expect(score).toBe(5);
+  });
+
+  it("scales the reduction with a larger overage (3000 over a 2000 target → 2.5)", () => {
+    // overageRatio = 1000/2000 = 0.5 → 5 * 0.5 = 2.5
+    const score = computeTaskScore({
+      actualValue: 3000,
+      targetValue: 2000,
+      importanceWeight: 5,
+      unit: "calories"
+    });
+    expect(score).toBeCloseTo(2.5, 5);
+  });
+
+  it("scores 0 when the intake doubles the limit (overageRatio = 1)", () => {
+    const score = computeTaskScore({
+      actualValue: 4000,
+      targetValue: 2000,
+      importanceWeight: 5,
+      unit: "calories"
+    });
+    expect(score).toBe(0);
+  });
+
+  it("never goes below 0 for an extreme overage", () => {
+    const score = computeTaskScore({
+      actualValue: 10_000,
+      targetValue: 2000,
+      importanceWeight: 5,
+      unit: "calories"
+    });
+    expect(score).toBe(0);
+  });
+
+  it("scores 0 when nothing is logged (unlogged day)", () => {
+    const score = computeTaskScore({
+      actualValue: null,
+      targetValue: 2000,
+      importanceWeight: 5,
+      unit: "calories"
+    });
+    expect(score).toBe(0);
+  });
+
+  it("does not treat a non-calories unit as limit-scale by default", () => {
+    // A "km" task with the same numbers stays target-scale: capped at the
+    // weight, so 2100/2000 * 5 = 5.25 → capped to 5 (no overage reduction).
+    const score = computeTaskScore({
+      actualValue: 2100,
+      targetValue: 2000,
+      importanceWeight: 5,
+      unit: "km"
+    });
+    expect(score).toBe(5);
+  });
+
+  it("honors an explicit scaleType='limit' regardless of unit", () => {
+    const score = computeTaskScore({
+      actualValue: 2100,
+      targetValue: 2000,
+      importanceWeight: 5,
+      scaleType: "limit"
+    });
+    expect(score).toBeCloseTo(4.75, 5);
+  });
+});
+
+describe("computeTaskScore — avoid scale", () => {
+  // An avoid-scale task: full weight when the user avoided the thing that day,
+  // 0 when they slipped. A common inversion bug is to swap these — these tests
+  // pin the semantics: avoided (actualValue === 0) = full, slipped (> 0) = 0.
+  it("scores the full importance weight when avoided (actualValue === 0)", () => {
+    const score = computeTaskScore({
+      actualValue: 0,
+      targetValue: 1,
+      importanceWeight: 4,
+      scaleType: "avoid"
+    });
+    expect(score).toBe(4);
+  });
+
+  it("scores 0 when slipped (actualValue > 0)", () => {
+    const score = computeTaskScore({
+      actualValue: 1,
+      targetValue: 1,
+      importanceWeight: 4,
+      scaleType: "avoid"
+    });
+    expect(score).toBe(0);
+  });
+
+  it("scores 0 when slipped by any positive amount (not just the target)", () => {
+    const score = computeTaskScore({
+      actualValue: 3,
+      targetValue: 1,
+      importanceWeight: 4,
+      scaleType: "avoid"
+    });
+    expect(score).toBe(0);
+  });
+
+  it("scores 0 when unlogged / end-of-day with no log (actualValue === null)", () => {
+    const score = computeTaskScore({
+      actualValue: null,
+      targetValue: 1,
+      importanceWeight: 4,
+      scaleType: "avoid"
+    });
+    expect(score).toBe(0);
+  });
+
+  it("does not invert: avoided ≠ 0 and slipped ≠ full weight", () => {
+    const avoided = computeTaskScore({
+      actualValue: 0,
+      targetValue: 1,
+      importanceWeight: 4,
+      scaleType: "avoid"
+    });
+    const slipped = computeTaskScore({
+      actualValue: 1,
+      targetValue: 1,
+      importanceWeight: 4,
+      scaleType: "avoid"
+    });
+    expect(avoided).toBe(4);
+    expect(slipped).toBe(0);
+    expect(avoided).toBeGreaterThan(slipped);
+  });
+});
+
+describe("computeTaskScore — restriction scale (count unit)", () => {
+  // "check phone at most once a day" — a count-based restriction. Strict
+  // pass/fail: at or under the cap ⇒ full weight; over by even one ⇒ 0 (no
+  // partial credit). Meeting the cap exactly is a PASS, not a fail.
+  const restrictionCount = (actualValue: number | null) =>
+    computeTaskScore({
+      actualValue,
+      targetValue: 1,
+      importanceWeight: 4,
+      unit: "count",
+      scaleType: "restriction"
+    });
+
+  it("scores the full weight when exactly at the limit (boundary)", () => {
+    expect(restrictionCount(1)).toBe(4);
+  });
+
+  it("scores the full weight when under the limit", () => {
+    expect(restrictionCount(0)).toBe(4);
+  });
+
+  it("scores exactly 0 when over the limit by one (no partial credit)", () => {
+    expect(restrictionCount(2)).toBe(0);
+  });
+
+  it("scores exactly 0 when over the limit by more", () => {
+    expect(restrictionCount(10)).toBe(0);
+  });
+
+  it("scores 0 when unlogged (end-of-day, no log)", () => {
+    expect(restrictionCount(null)).toBe(0);
+  });
+
+  it("scores the full weight for a LOGGED 0 (did zero of the restricted thing)", () => {
+    // A logged 0 is a success (well under the cap), not a no-progress value —
+    // distinct from an unlogged day, which is 0. This is why the restriction
+    // branch runs before the shared null/<=0 guard.
+    expect(restrictionCount(0)).toBe(4);
+  });
+});
+
+describe("computeTaskScore — restriction scale (hours unit)", () => {
+  // "restrict social media to at most 1 hour a day" — a duration-based
+  // restriction. Graduated partial credit using the same formula as the limit
+  // scale: overageRatio = max(0, actual-target)/target; score =
+  // weight * clamp(1 - overageRatio, 0, 1). Meeting the cap exactly is full
+  // weight, not a fail.
+  const restrictionHours = (actualValue: number | null) =>
+    computeTaskScore({
+      actualValue,
+      targetValue: 1,
+      importanceWeight: 4,
+      unit: "hours",
+      scaleType: "restriction"
+    });
+
+  it("scores the full weight when exactly at the limit (boundary)", () => {
+    expect(restrictionHours(1)).toBe(4);
+  });
+
+  it("scores the full weight when under the limit", () => {
+    expect(restrictionHours(0.5)).toBe(4);
+  });
+
+  it("gives graduated partial credit when over (1.5h over a 1h cap → 2)", () => {
+    // overageRatio = 0.5/1 = 0.5 → 4 * (1 - 0.5) = 2
+    expect(restrictionHours(1.5)).toBeCloseTo(2, 5);
+  });
+
+  it("scores exactly 0 when the overage equals the cap (2h over 1h)", () => {
+    // overageRatio = 1/1 = 1 → 4 * 0 = 0
+    expect(restrictionHours(2)).toBe(0);
+  });
+
+  it("never goes below 0 for an extreme overage", () => {
+    expect(restrictionHours(10)).toBe(0);
+  });
+
+  it("scores 0 when unlogged (end-of-day, no log)", () => {
+    expect(restrictionHours(null)).toBe(0);
+  });
+
+  it("matches the limit-scale formula for the same inputs", () => {
+    // A restriction task with a non-count unit must behave identically to a
+    // limit task with the same numbers — the only difference is the count
+    // strict pass/fail path, which this branch does not take.
+    const inputs = [0.5, 1, 1.5, 2, 3] as const;
+    for (const actual of inputs) {
+      const restriction = computeTaskScore({
+        actualValue: actual,
+        targetValue: 1,
+        importanceWeight: 4,
+        unit: "hours",
+        scaleType: "restriction"
+      });
+      const limit = computeTaskScore({
+        actualValue: actual,
+        targetValue: 1,
+        importanceWeight: 4,
+        scaleType: "limit"
+      });
+      expect(restriction).toBe(limit);
+    }
+  });
+});
+
+describe("computeTaskScore — restriction scale boundary across branches", () => {
+  it("actualValue == targetValue scores full points in both the count and non-count branches", () => {
+    const countAtBoundary = computeTaskScore({
+      actualValue: 1,
+      targetValue: 1,
+      importanceWeight: 5,
+      unit: "count",
+      scaleType: "restriction"
+    });
+    const hoursAtBoundary = computeTaskScore({
+      actualValue: 1,
+      targetValue: 1,
+      importanceWeight: 5,
+      unit: "hours",
+      scaleType: "restriction"
+    });
+    expect(countAtBoundary).toBe(5);
+    expect(hoursAtBoundary).toBe(5);
+    // Neither branch treats meeting the cap as a fail.
+    expect(countAtBoundary).toBeGreaterThan(0);
+    expect(hoursAtBoundary).toBeGreaterThan(0);
+  });
+});
+
 describe("computeDailyRating", () => {
   it("returns 0.0 for an empty (missed) day", () => {
     const result = computeDailyRating([], "2024-01-01");

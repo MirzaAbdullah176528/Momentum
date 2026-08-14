@@ -8,6 +8,8 @@ import type {
   DailyRatingDTO,
   DailyRatingWithBreakdownDTO,
   TaskBreakdownDTO,
+  TaskUnit,
+  ScaleType,
   ApiResponse
 } from "@momentum/shared-types";
 import type { AppContext } from "../types.js";
@@ -84,7 +86,9 @@ taskLogs.put("/", MUTATING_ENDPOINT_RATE_LIMIT, async (c) => {
   const taskScore = computeTaskScore({
     actualValue: input.actualValue,
     targetValue: task.targetValue,
-    importanceWeight: task.importanceWeight
+    importanceWeight: task.importanceWeight,
+    unit: task.unit as TaskUnit,
+    scaleType: task.scaleType as ScaleType
   });
 
   const upserted = await scoped.upsertTaskLog(input.taskId, input.date, {
@@ -120,7 +124,9 @@ taskLogs.get("/daily-rating/:date", async (c) => {
     const taskScore = computeTaskScore({
       actualValue,
       targetValue: task.targetValue,
-      importanceWeight: task.importanceWeight
+      importanceWeight: task.importanceWeight,
+      unit: task.unit as TaskUnit,
+      scaleType: task.scaleType as ScaleType
     });
     return {
       taskId: task.id,
@@ -139,7 +145,9 @@ taskLogs.get("/daily-rating/:date", async (c) => {
     tasksWithLogs.map(({ task, log }) => ({
       actualValue: log?.actualValue ?? null,
       targetValue: task.targetValue,
-      importanceWeight: task.importanceWeight
+      importanceWeight: task.importanceWeight,
+      unit: task.unit as TaskUnit,
+      scaleType: task.scaleType as ScaleType
     })),
     date
   );

@@ -22,6 +22,13 @@
       "when": 1786701976193,
       "tag": "0002_add_calories_unit",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1786717376698,
+      "tag": "0003_add_task_scale_type",
+      "breakpoints": true
     }
   ]
 }

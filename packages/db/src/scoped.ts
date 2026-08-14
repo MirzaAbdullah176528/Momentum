@@ -1,6 +1,8 @@
 import { eq, and, gte, lte, sql, asc, inArray } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "./schema.js";
+import { computeTaskScore } from "@momentum/rating-engine";
+import type { TaskUnit, ScaleType } from "@momentum/shared-types";
 import type {
   SeasonRow,
   SeasonInsert,
@@ -421,6 +423,7 @@ export class ScopedDb {
         title: input.title,
         targetValue: input.targetValue,
         unit: input.unit,
+        scaleType: input.scaleType,
         importanceWeight: input.importanceWeight,
         sortOrder: input.sortOrder ?? 0,
         scheduledStart: input.scheduledStart,
@@ -729,7 +732,9 @@ async function computeUserSeasonRatingInDb(
     .select({
       id: schema.task.id,
       targetValue: schema.task.targetValue,
-      importanceWeight: schema.task.importanceWeight
+      importanceWeight: schema.task.importanceWeight,
+      unit: schema.task.unit,
+      scaleType: schema.task.scaleType
     })
     .from(schema.task)
     .where(eq(schema.task.userId, userId))
@@ -768,13 +773,13 @@ async function computeUserSeasonRatingInDb(
     let totalWeight = 0;
     for (const task of tasks) {
       const actual = dayLogs.get(task.id) ?? null;
-      const score =
-        actual === null || actual <= 0
-          ? 0
-          : Math.min(
-            (actual / task.targetValue) * task.importanceWeight,
-            task.importanceWeight
-          );
+      const score = computeTaskScore({
+        actualValue: actual,
+        targetValue: task.targetValue,
+        importanceWeight: task.importanceWeight,
+        unit: task.unit as TaskUnit,
+        scaleType: task.scaleType as ScaleType
+      });
       totalScore += score;
       totalWeight += task.importanceWeight;
     }
