@@ -211,6 +211,7 @@ export const task = sqliteTable(
     title: text("title").notNull(),
     targetValue: real("target_value").notNull(),
     unit: text("unit").notNull(),
+    scaleType: text("scale_type").notNull().default("target"),
     importanceWeight: integer("importance_weight").notNull(),
     sortOrder: integer("sort_order")
       .notNull()
@@ -233,6 +234,10 @@ export const task = sqliteTable(
     check(
       "task_unit_valid",
       sql`${table.unit} IN ('km', 'hours', 'pages', 'reps', 'count', 'calories')`
+    ),
+    check(
+      "task_scale_type_valid",
+      sql`${table.scaleType} IN ('target', 'limit', 'avoid', 'restriction')`
     ),
     check(
       "task_importance_weight_range",

@@ -6,11 +6,13 @@ import {
   TASK_UNITS,
   TASK_IMPORTANCE_WEIGHT_MIN,
   TASK_IMPORTANCE_WEIGHT_MAX,
+  SCALE_TYPES,
   type TaskDTO,
   type CreateTaskInputDTO,
   type UpdateTaskInputDTO,
   type ReorderTasksInputDTO,
   type TaskUnit,
+  type ScaleType,
   type ApiResponse
 } from "@momentum/shared-types";
 import type { AppContext } from "../types.js";
@@ -26,6 +28,7 @@ const HH_MM_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 const LOCKED_TASK_FIELDS = [
   "targetValue",
   "unit",
+  "scaleType",
   "importanceWeight"
 ] as const;
 
@@ -34,6 +37,7 @@ const createTaskSchema = z.object({
   title: z.string().min(1).max(280),
   targetValue: z.number().positive(),
   unit: z.enum(TASK_UNITS),
+  scaleType: z.enum(SCALE_TYPES).default("target"),
   importanceWeight: z
     .number()
     .int()
@@ -61,6 +65,7 @@ const updateTaskSchemaLocked = z
     ...editableTaskFields,
     targetValue: z.never().optional(),
     unit: z.never().optional(),
+    scaleType: z.never().optional(),
     importanceWeight: z.never().optional(),
     projectId: z.never().optional()
   })
@@ -73,6 +78,7 @@ const updateTaskSchemaUnlocked = z
     ...editableTaskFields,
     targetValue: z.number().positive().optional(),
     unit: z.enum(TASK_UNITS).optional(),
+    scaleType: z.enum(SCALE_TYPES).optional(),
     importanceWeight: z
       .number()
       .int()
@@ -95,6 +101,7 @@ function rowToDto(row: {
   title: string;
   targetValue: number;
   unit: string;
+  scaleType: string;
   importanceWeight: number;
   sortOrder: number;
   scheduledStart: string;
@@ -109,6 +116,7 @@ function rowToDto(row: {
     title: row.title,
     targetValue: row.targetValue,
     unit: row.unit as TaskUnit,
+    scaleType: row.scaleType as ScaleType,
     importanceWeight: row.importanceWeight,
     sortOrder: row.sortOrder,
     scheduledStart: row.scheduledStart,
@@ -146,6 +154,7 @@ tasks.post("/", MUTATING_ENDPOINT_RATE_LIMIT, async (c) => {
     title: parsed.data.title,
     targetValue: parsed.data.targetValue,
     unit: parsed.data.unit,
+    scaleType: parsed.data.scaleType,
     importanceWeight: parsed.data.importanceWeight,
     sortOrder: parsed.data.sortOrder,
     scheduledStart: parsed.data.scheduledStart,

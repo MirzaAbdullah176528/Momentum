@@ -8,6 +8,7 @@ import {
   TASK_IMPORTANCE_WEIGHT_MAX,
   type TaskDTO,
   type TaskUnit,
+  type ScaleType,
   type ProjectDTO,
   type CreateTaskInputDTO,
   type UpdateTaskInputDTO
@@ -32,6 +33,31 @@ interface TaskModalProps {
 
 const HH_MM_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 
+// Human-readable labels + hints for each scoring scale, shown in the modal's
+// scale selector. Order follows SCALE_TYPES (target, limit, avoid, restriction).
+const SCALE_OPTIONS = [
+  {
+    value: "target",
+    label: "Target — reach a goal",
+    hint: "More is better (e.g. run 5 km)."
+  },
+  {
+    value: "limit",
+    label: "Limit — don't exceed",
+    hint: "Stay under a cap (e.g. ≤ 2000 cal)."
+  },
+  {
+    value: "avoid",
+    label: "Avoid — don't do it",
+    hint: "Log 0 to pass; any value fails."
+  },
+  {
+    value: "restriction",
+    label: "Restriction — cap with penalty",
+    hint: "Count = strict pass/fail; other units = graduated."
+  }
+] as const satisfies readonly { value: ScaleType; label: string; hint: string }[];
+
 export function TaskModal({
   open,
   onClose,
@@ -49,6 +75,7 @@ export function TaskModal({
   const [title, setTitle] = useState("");
   const [targetValue, setTargetValue] = useState("");
   const [unit, setUnit] = useState<TaskUnit>("count");
+  const [scaleType, setScaleType] = useState<ScaleType>("target");
   const [importanceWeight, setImportanceWeight] = useState("3");
   const [scheduledStart, setScheduledStart] = useState("06:00");
   const [scheduledEnd, setScheduledEnd] = useState("07:00");
@@ -62,6 +89,7 @@ export function TaskModal({
         setTitle(task.title);
         setTargetValue(String(task.targetValue));
         setUnit(task.unit);
+        setScaleType(task.scaleType);
         setImportanceWeight(String(task.importanceWeight));
         setScheduledStart(task.scheduledStart);
         setScheduledEnd(task.scheduledEnd);
@@ -70,6 +98,7 @@ export function TaskModal({
         setTitle("");
         setTargetValue("");
         setUnit("count");
+        setScaleType("target");
         setImportanceWeight("3");
         setScheduledStart("06:00");
         setScheduledEnd("07:00");
@@ -99,6 +128,7 @@ export function TaskModal({
           }
           update.targetValue = target;
           update.unit = unit;
+          update.scaleType = scaleType;
           update.importanceWeight = Number(importanceWeight);
         }
         await api.tasks.update(task.id, update);
@@ -119,6 +149,7 @@ export function TaskModal({
           title,
           targetValue: target,
           unit,
+          scaleType,
           importanceWeight: Number(importanceWeight),
           scheduledStart,
           scheduledEnd
@@ -164,6 +195,17 @@ export function TaskModal({
           required
           maxLength={280}
         />
+
+        <Select
+          label="Scoring scale"
+          value={scaleType}
+          onChange={(e) => setScaleType(e.target.value as ScaleType)}
+          options={SCALE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+          disabled={isEditing && !lockedFieldsEditable}
+        />
+        <p className="-mt-2 text-xs text-liquid-text-subtle">
+          {SCALE_OPTIONS.find((o) => o.value === scaleType)?.hint}
+        </p>
 
         <div className="grid grid-cols-2 gap-3">
           <Input

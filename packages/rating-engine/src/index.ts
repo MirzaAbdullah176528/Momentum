@@ -1,5 +1,6 @@
 export {
   computeTaskScore,
+  resolveScaleType,
   computeDailyRating,
   computeDailyRatingForTasks,
   computeSeasonRating
