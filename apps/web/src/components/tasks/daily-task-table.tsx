@@ -160,7 +160,11 @@ function LogInput({
         {unit}
       </span>
       {error && (
-        <span className="sr-only" role="alert">
+        <span
+          role="alert"
+          className="text-xs text-liquid-danger truncate max-w-[7rem]"
+          title={error}
+        >
           {error}
         </span>
       )}
