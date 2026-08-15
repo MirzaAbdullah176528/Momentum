@@ -31,7 +31,7 @@ export const csrfMiddleware = (): MiddlewareHandler => {
     // API (e.g. a tunnel host). CSRF protection still requires an Origin header
     // to be present (which browsers always send for cross-site mutating
     // requests), so we accept any non-empty Origin locally. Production uses the
-    // strict allow-list above (WEB_ORIGINS + BETTER_AUTH_URL + legacy hosts).
+    // strict allow-list above (WEB_ORIGINS + BETTER_AUTH_URL + localhost).
     if (!allowed.includes(origin) && env.APP_ENV !== "production") {
       await next();
       return;

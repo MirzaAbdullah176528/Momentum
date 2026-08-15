@@ -58,10 +58,11 @@ export interface Env {
   WEB_DEV_ORIGINS?: string;
   /**
    * Comma-separated list of frontend origins allowed to call the API in
-   * production (e.g. "https://momentum.vercel.app,https://momentum.app").
-   * When unset, only BETTER_AUTH_URL + the legacy momentum.app hosts are
-   * trusted. Use this so deployments on Vercel / custom domains work without
-   * code changes.
+   * production (e.g. "https://momentum-by-abdullah-hassan.vercel.app").
+   * When unset, only BETTER_AUTH_URL + localhost are trusted. Used by
+   * better-auth trustedOrigins, CORS, CSRF, and the CSP connect-src list so
+   * all four agree — set this to your deployed web origin(s) and auth works
+   * without code changes.
    */
   WEB_ORIGINS?: string;
 }

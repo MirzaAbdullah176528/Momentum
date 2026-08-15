@@ -55,9 +55,10 @@ export function buildAuthOptions(env: Env) {
   const sender = createEmailSender(env);
   const db = createDb(env.DB);
   const baseUrl = env.BETTER_AUTH_URL;
-  // Single source of truth for trusted browser origins, shared with CORS and
-  // CSRF so all three agree. In production this includes WEB_ORIGINS (set per
-  // deployment, e.g. the Vercel frontend URL) so auth works without code changes.
+  // Single source of truth for trusted browser origins, shared with CORS, CSRF,
+  // and the CSP connect-src list. In production this includes WEB_ORIGINS (set
+  // per deployment, e.g. the Vercel frontend URL) so better-auth's origin check
+  // accepts the deployed frontend instead of throwing "Invalid origin".
   const trustedOrigins = getAllowedOrigins(env);
 
   return betterAuth({
