@@ -1,24 +1,8 @@
 import type { MiddlewareHandler } from "hono";
+import { getAllowedOrigins } from "../lib/origins.js";
+import type { Env } from "../types.js";
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
-
-function getAllowedOrigins(env: { APP_ENV?: string; BETTER_AUTH_URL?: string }): string[] {
-  const origins = new Set<string>();
-  if (env.BETTER_AUTH_URL) {
-    origins.add(env.BETTER_AUTH_URL);
-  }
-  origins.add("http://localhost:3000");
-  origins.add("http://127.0.0.1:3000");
-  if (env.APP_ENV === "production") {
-    origins.add("https://momentum.app");
-    origins.add("https://app.momentum.app");
-  }
-  return [...origins];
-}
-
-function isLocalDev(env: { APP_ENV?: string }): boolean {
-  return env.APP_ENV !== "production";
-}
 
 export const csrfMiddleware = (): MiddlewareHandler => {
   return async (c, next) => {
@@ -41,13 +25,18 @@ export const csrfMiddleware = (): MiddlewareHandler => {
       );
     }
 
-    const allowed = getAllowedOrigins(c.env as { APP_ENV?: string; BETTER_AUTH_URL?: string });
+    const env = (c.env as Env) ?? ({} as Env);
+    const allowed = getAllowedOrigins(env);
     // In local dev the web app is often served from a different origin than the
     // API (e.g. a tunnel host). CSRF protection still requires an Origin header
     // to be present (which browsers always send for cross-site mutating
-    // requests), so we accept any non-empty Origin locally. Production keeps the
-    // strict allow-list above.
-    if (!allowed.includes(origin) && !isLocalDev(c.env as { APP_ENV?: string })) {
+    // requests), so we accept any non-empty Origin locally. Production uses the
+    // strict allow-list above (WEB_ORIGINS + BETTER_AUTH_URL + legacy hosts).
+    if (!allowed.includes(origin) && env.APP_ENV !== "production") {
+      await next();
+      return;
+    }
+    if (!allowed.includes(origin)) {
       return c.json(
         {
           ok: false as const,

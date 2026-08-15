@@ -13,6 +13,7 @@ import { securityHeaders } from "./middleware/security-headers.js";
 import { csrfMiddleware } from "./middleware/csrf.js";
 import { AUTH_ENDPOINT_RATE_LIMIT } from "./middleware/rate-limit.js";
 import { createAuth } from "./lib/auth.js";
+import { getAllowedOrigins } from "./lib/origins.js";
 import type { AppContext, Env } from "./types.js";
 
 const app = new Hono<AppContext>();
@@ -56,10 +57,7 @@ app.use(
   cors({
     origin: (origin, c) => {
       const env = (c.env as Env) ?? ({} as Env);
-      const isProduction = env.APP_ENV === "production";
-      const allowed = isProduction
-        ? ["https://momentum.app", "https://app.momentum.app"]
-        : ["http://localhost:3000", "http://127.0.0.1:3000"];
+      const allowed = getAllowedOrigins(env);
       if (!origin || allowed.includes(origin)) return origin;
       return null;
     },

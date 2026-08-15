@@ -56,6 +56,14 @@ export interface Env {
   FROM_EMAIL: string;
   APP_ENV: "local" | "production";
   WEB_DEV_ORIGINS?: string;
+  /**
+   * Comma-separated list of frontend origins allowed to call the API in
+   * production (e.g. "https://momentum.vercel.app,https://momentum.app").
+   * When unset, only BETTER_AUTH_URL + the legacy momentum.app hosts are
+   * trusted. Use this so deployments on Vercel / custom domains work without
+   * code changes.
+   */
+  WEB_ORIGINS?: string;
 }
 
 export interface AppContext {
