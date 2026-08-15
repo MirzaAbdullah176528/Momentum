@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from "hono";
+import { getAllowedOrigins } from "../lib/origins.js";
 import type { Env } from "../types.js";
 
 const SECURITY_HEADERS: Record<string, string> = {
@@ -12,10 +13,9 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 function buildCsp(env: Env): string {
-  const isProduction = env.APP_ENV === "production";
-  const allowedOrigins = isProduction
-    ? ["https://momentum-by-abdullah-hassan.vercel.app", "https://momentum-by-abdullah-hassan.vercel.app"]
-    : ["http://localhost:3000", "http://127.0.0.1:3000"];
+  // Same allow-list as CORS/CSRF/better-auth so the browser is permitted to
+  // make the same cross-origin calls the API trusts.
+  const allowedOrigins = getAllowedOrigins(env);
 
   return [
     "default-src 'none'",

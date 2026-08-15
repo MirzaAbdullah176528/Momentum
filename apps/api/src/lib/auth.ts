@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { createDb, schema } from "@momentum/db";
 import { createEmailSender } from "./email.js";
+import { getAllowedOrigins } from "./origins.js";
 import type { Env } from "../types.js";
 
 const APP_NAME = "Momentum";
@@ -54,17 +55,11 @@ export function buildAuthOptions(env: Env) {
   const sender = createEmailSender(env);
   const db = createDb(env.DB);
   const baseUrl = env.BETTER_AUTH_URL;
-  const trustedOrigins = [
-    baseUrl,
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    // Allow any local dev origin the web app may be served from (tunnel hosts,
-    // alternate ports). Production keeps BETTER_AUTH_URL only via baseUrl above.
-    ...(env.APP_ENV !== "production"
-      ? (env.WEB_DEV_ORIGINS?.split(",").map((s) => s.trim()).filter(Boolean) ??
-        [])
-      : [])
-  ].filter((url): url is string => Boolean(url));
+  // Single source of truth for trusted browser origins, shared with CORS, CSRF,
+  // and the CSP connect-src list. In production this includes WEB_ORIGINS (set
+  // per deployment, e.g. the Vercel frontend URL) so better-auth's origin check
+  // accepts the deployed frontend instead of throwing "Invalid origin".
+  const trustedOrigins = getAllowedOrigins(env);
 
   return betterAuth({
     appName: APP_NAME,

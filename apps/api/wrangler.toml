@@ -32,7 +32,11 @@ name = "momentum-api"
 APP_ENV = "production"
 BETTER_AUTH_URL = "https://api.momentum.app"
 FROM_EMAIL = "Momentum <noreply@momentum.app>"
-WEB_DEV_ORIGINS = "https://momentum-by-abdullah-hassan.vercel.app"
+# Comma-separated list of frontend origins allowed to call the API in
+# production. Set this to your deployed web origin(s). Used by better-auth
+# trustedOrigins, CORS, CSRF, and the CSP connect-src list. Override per
+# deployment with `wrangler secret put WEB_ORIGINS` if origins differ.
+WEB_ORIGINS = "https://momentum-by-abdullah-hassan.vercel.app"
 
 [[env.production.d1_databases]]
 binding = "DB"
