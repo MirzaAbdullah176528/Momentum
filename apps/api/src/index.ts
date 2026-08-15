@@ -18,13 +18,6 @@ import type { AppContext, Env } from "./types.js";
 
 const app = new Hono<AppContext>();
 
-/**
- * Map a thrown error to a short, user-facing JSON error shape. Used by the
- * global onError handler and the auth-handler wrapper so the same clear
- * messages surface everywhere instead of a generic "An unexpected error
- * occurred." Safe to expose: keys only on stable SQLite text, never returns
- * the raw query or stack.
- */
 function classifyError(raw: string, isLocal: boolean): {
   code: string;
   message: string;

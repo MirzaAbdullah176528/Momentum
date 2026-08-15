@@ -3,6 +3,13 @@ main = "src/index.ts"
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 
+[[d1_databases]]
+binding = "DB"
+database_name = "momentum-local"
+database_id = "local"
+migrations_dir = "../../packages/db/migrations"
+migrations_table = "_drizzle_migrations"
+
 # ============================================================
 # LOCAL DEFAULT VARIABLES
 # ============================================================

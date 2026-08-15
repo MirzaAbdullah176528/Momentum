@@ -6,7 +6,7 @@
   "scripts": {
     "build": "wrangler deploy --dry-run --outdir=dist",
     "dev": "wrangler dev",
-    "predev": "printf 'y\\n' | wrangler d1 migrations apply momentum-local --local",
+    "predev": "wrangler d1 migrations apply momentum-local --local",
     "prestart": "printf 'y\\n' | wrangler d1 migrations apply momentum-local --local",
     "deploy": "wrangler deploy",
     "predeploy": "printf 'y\\n' | wrangler d1 migrations apply momentum-local --remote",
