@@ -58,7 +58,7 @@ app.use(
       const env = (c.env as Env) ?? ({} as Env);
       const isProduction = env.APP_ENV === "production";
       const allowed = isProduction
-        ? ["https://momentum.app", "https://app.momentum.app"]
+        ? ["https://momentum-by-abdullah-hassan.vercel.app", "https://momentum-by-abdullah-hassan.vercel.app"]
         : ["http://localhost:3000", "http://127.0.0.1:3000"];
       if (!origin || allowed.includes(origin)) return origin;
       return null;

@@ -14,7 +14,7 @@ const SECURITY_HEADERS: Record<string, string> = {
 function buildCsp(env: Env): string {
   const isProduction = env.APP_ENV === "production";
   const allowedOrigins = isProduction
-    ? ["https://momentum.app", "https://app.momentum.app"]
+    ? ["https://momentum-by-abdullah-hassan.vercel.app", "https://momentum-by-abdullah-hassan.vercel.app"]
     : ["http://localhost:3000", "http://127.0.0.1:3000"];
 
   return [

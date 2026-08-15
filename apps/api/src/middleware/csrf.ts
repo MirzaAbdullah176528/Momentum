@@ -10,8 +10,8 @@ function getAllowedOrigins(env: { APP_ENV?: string; BETTER_AUTH_URL?: string }):
   origins.add("http://localhost:3000");
   origins.add("http://127.0.0.1:3000");
   if (env.APP_ENV === "production") {
-    origins.add("https://momentum.app");
-    origins.add("https://app.momentum.app");
+    origins.add("https://momentum-by-abdullah-hassan.vercel.app");
+    origins.add("https://momentum-by-abdullah-hassan.vercel.app");
   }
   return [...origins];
 }
