@@ -6,7 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "momentum-local"
-database_id = "local"
+database_id = "d0f3ad0d-714d-4c96-b8c2-757cc2cc008d"
 migrations_dir = "../../packages/db/migrations"
 migrations_table = "_drizzle_migrations"
 
@@ -68,6 +68,6 @@ WEB_DEV_ORIGINS = "https://work-1-csgfigyebrwxckrp.prod-runtime.all-hands.dev,ht
 [[env.local.d1_databases]]
 binding = "DB"
 database_name = "momentum-local"
-database_id = "local"
+database_id = "d0f3ad0d-714d-4c96-b8c2-757cc2cc008d"
 migrations_dir = "../../packages/db/migrations"
 migrations_table = "_drizzle_migrations"

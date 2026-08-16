@@ -55,17 +55,9 @@ export function buildAuthOptions(env: Env) {
   const sender = createEmailSender(env);
   const db = createDb(env.DB);
   const baseUrl = env.BETTER_AUTH_URL;
-  // Single source of truth for trusted browser origins, shared with CORS, CSRF,
-  // and the CSP connect-src list. In production this includes WEB_ORIGINS (set
-  // per deployment, e.g. the Vercel frontend URL) so better-auth's origin check
-  // accepts the deployed frontend instead of throwing "Invalid origin".
+
   const trustedOrigins = getAllowedOrigins(env);
-  // When the frontend and API are on different registrable domains (e.g. a
-  // Vercel frontend calling a Cloudflare API), the session cookie must be
-  // SameSite=None + Secure or the browser will refuse to store/send it across
-  // sites — login appears to succeed but the dashboard session check fails and
-  // bounces back to the login page. In local dev (same-site localhost) we keep
-  // SameSite=Lax for the stricter default.
+
   const isCrossSite = env.APP_ENV === "production";
   const cookieSameSite = isCrossSite ? "none" : "lax";
 
