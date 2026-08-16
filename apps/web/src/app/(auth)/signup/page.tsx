@@ -30,18 +30,11 @@ export default function SignupPage() {
       if (result.error) {
         setError(result.error.message ?? "Could not create account.");
       } else {
-        // Hard-navigate (full page load) instead of client-side router.push.
-        // The shared <AuthProvider> fetches the session once on mount; a
-        // client-side navigation does not remount it, and better-auth's client
-        // getSession() returns a stale null right after signUp (it cached the
-        // pre-login null), so router.push("/dashboard") bounces back to /login.
-        // A full reload remounts AuthProvider, which re-fetches the now-valid
-        // session — the same as manually entering the dashboard URL, which
-        // works.
+
         window.location.assign("/dashboard");
       }
-    } catch {
-      setError("Could not reach the server. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
