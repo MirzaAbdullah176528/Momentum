@@ -17,7 +17,8 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && rm -rf node_modules",
+    "deploy": "cd apps/api && wrangler deploy --env production"
   },
   "devDependencies": {
     "turbo": "^2.3.3",
