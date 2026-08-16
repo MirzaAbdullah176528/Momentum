@@ -206,14 +206,12 @@ export const api = {
   analytics: {
     dailyRatingTimeSeries: (seasonId?: string) =>
       getJson<DailyRatingTimeSeriesDTO | null>(
-        `/api/analytics/daily-rating-time-series${
-          seasonId ? `?seasonId=${seasonId}` : ""
+        `/api/analytics/daily-rating-time-series${seasonId ? `?seasonId=${seasonId}` : ""
         }`
       ),
     projectCompletionStats: (seasonId?: string) =>
       getJson<ProjectCompletionStatsResponseDTO | null>(
-        `/api/analytics/project-completion-stats${
-          seasonId ? `?seasonId=${seasonId}` : ""
+        `/api/analytics/project-completion-stats${seasonId ? `?seasonId=${seasonId}` : ""
         }`
       )
   },

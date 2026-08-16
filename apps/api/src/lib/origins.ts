@@ -9,20 +9,6 @@ function splitOrigins(value: string | undefined): string[] {
     .filter(Boolean);
 }
 
-/**
- * The full set of browser origins trusted to call the API. A single source of
- * truth shared by better-auth's trustedOrigins, the CORS middleware, the CSRF
- * middleware, and the CSP connect-src list so all four agree.
- *
- * In production the list is:
- *   WEB_ORIGINS (comma-separated, configured per deployment) +
- *   BETTER_AUTH_URL +
- *   localhost (kept so local-only smoke tests against the prod worker still
- *   work; harmless in production).
- *
- * In local dev we additionally accept WEB_DEV_ORIGINS (tunnel hosts etc.) and
- * the localhost origins.
- */
 export function getAllowedOrigins(env: Env): string[] {
   const origins = new Set<string>();
 
