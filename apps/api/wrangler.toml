@@ -37,7 +37,7 @@ name = "momentum-api"
 
 [env.production.vars]
 APP_ENV = "production"
-BETTER_AUTH_URL = "https://api.momentum.app"
+BETTER_AUTH_URL = "https://momentum-by-abdullah-hassan.vercel.app"
 FROM_EMAIL = "Momentum <noreply@momentum.app>"
 # Comma-separated list of frontend origins allowed to call the API in
 # production. Set this to your deployed web origin(s). Used by better-auth
