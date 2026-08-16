@@ -73,19 +73,14 @@ app.get("/health", (c) =>
 );
 
 // Better-auth catches its own DB errors and returns an empty 5xx response,
-// which hides the real cause ("no such table/column") from the user. Run its
-// handler through a wrapper that, on a thrown DB-schema error, returns the
-// same clear, actionable JSON shape the rest of the API uses.
+// hiding the real cause ("no such table/column"). This wrapper replaces such
+// empty server errors with the same actionable JSON shape the rest of the API
+// uses. On a correctly-migrated DB this branch is never hit.
 async function handleAuth(c: Context<AppContext>): Promise<Response> {
   const auth = createAuth(c.env);
   const isLocal = c.env?.APP_ENV !== "production";
   try {
     const response = await auth.handler(c.req.raw);
-    // Better-auth catches its own DB errors internally and returns an empty
-    // 5xx response, hiding the real cause. When we get a server error with no
-    // usable body, replace it with the same clear, actionable JSON shape the
-    // rest of the API uses. On a correctly-migrated DB this branch is never
-    // hit because better-auth returns well-formed responses.
     if (response.status >= 500) {
       const text = await response.text();
       const trimmed = text.trim();

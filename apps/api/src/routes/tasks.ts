@@ -56,10 +56,9 @@ const editableTaskFields = {
   scheduledEnd: z.string().regex(HH_MM_REGEX).optional()
 };
 
-// When the season-day-1 unlock does NOT apply, locked fields reject anything
-// (z.never) so sending them yields a 403 "immutable" error — the existing
-// behavior. projectId is also never() here since project reassignment is a
-// separate concern handled elsewhere and is not part of this exception.
+// When the season-day-1 unlock does NOT apply, locked fields are z.never() so
+// sending them yields a 403 "immutable" — matching the original contract.
+// projectId is never() here too (reassignment is a separate concern).
 const updateTaskSchemaLocked = z
   .object({
     ...editableTaskFields,
@@ -71,8 +70,8 @@ const updateTaskSchemaLocked = z
   })
   .strict();
 
-// When the season-day-1 unlock DOES apply, locked fields are accepted (with
-// the same validation as creation) and persisted. projectId remains never().
+// When the season-day-1 unlock DOES apply, locked fields are accepted (same
+// validation as creation) and persisted. projectId remains never().
 const updateTaskSchemaUnlocked = z
   .object({
     ...editableTaskFields,
@@ -175,10 +174,9 @@ tasks.patch("/:id", MUTATING_ENDPOINT_RATE_LIMIT, async (c) => {
   const scoped = await createScopedDb(c.env.DB, c.get("userId"));
   const id = c.req.param("id");
 
-  // Season-day-1 unlock (query-time, not stored): the user's locked task fields
-  // (targetValue/unit/importanceWeight) become editable only when today, in PKT,
-  // equals the startDate of their currently active season. A user with no active
-  // season falls back to always-immutable.
+  // Season-day-1 unlock (query-time, not stored): locked task fields
+  // (targetValue/unit/importanceWeight) are editable only when today (PKT)
+  // equals the active season's startDate. No active season ⇒ always-immutable.
   const todayPkt = nowPktDateString();
   const activeSeason = await scoped.currentSeason(todayPkt);
   const canEditLockedFields = Boolean(
@@ -192,10 +190,9 @@ tasks.patch("/:id", MUTATING_ENDPOINT_RATE_LIMIT, async (c) => {
   if (!parsed.success) {
     const issues = parsed.error.issues;
     // When locked, a present-but-forbidden field surfaces as an invalid_type
-    // issue (from z.never()); map that to a 403 "immutable" so the behavior
-    // matches the existing contract on every non-day-1 day. While unlocked,
-    // the same fields parse as real validators and produce plain validation
-    // errors instead.
+    // issue (from z.never()); map that to a 403 "immutable" to match the
+    // existing contract. While unlocked, the same fields produce plain
+    // validation errors.
     if (!canEditLockedFields) {
       const attemptedImmutable = issues.find(
         (i) =>

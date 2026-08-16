@@ -59,11 +59,11 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-      <header className="space-y-2">
+      <header className="space-y-2 animate-fade-rise">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm text-liquid-text-muted">{today}</p>
-            <h1 className="text-2xl font-bold text-liquid-text">Today</h1>
+            <h1 className="text-2xl font-bold text-liquid-text tracking-tight">Today</h1>
           </div>
           <div className="flex gap-2">
             <Button
@@ -105,10 +105,10 @@ export default function DashboardPage() {
       ) : (
         <>
           <section
-            className="liquid-glass-strong p-6 flex items-center justify-between gap-6"
+            className="liquid-glass-strong p-6 flex items-center justify-between gap-6 animate-fade-rise"
             aria-labelledby="rating-heading"
           >
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <h2
                 id="rating-heading"
                 className="text-sm font-medium text-liquid-text-muted uppercase tracking-wide"
@@ -120,7 +120,7 @@ export default function DashboardPage() {
               ) : (
                 <RatingBadge rating={0} size="xl" />
               )}
-              <div className="flex gap-2 pt-1">
+              <div className="flex flex-wrap gap-2 pt-1">
                 {rating && rating.taskCount > 0 ? (
                   <>
                     <Badge tone="neutral">
@@ -153,7 +153,7 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          <section aria-labelledby="tasks-heading">
+          <section aria-labelledby="tasks-heading" className="animate-fade-rise">
             <div className="flex items-center justify-between mb-3">
               <h2
                 id="tasks-heading"

@@ -26,14 +26,9 @@ export default function LoginPage() {
       if (result.error) {
         setError(result.error.message ?? "Invalid email or password.");
       } else {
-        // Hard-navigate (full page load) instead of client-side router.push.
-        // The shared <AuthProvider> fetches the session once on mount; a
-        // client-side navigation does not remount it, and better-auth's client
-        // getSession() returns a stale null right after signIn (it cached the
-        // pre-login null), so router.push("/dashboard") bounces back to /login.
-        // A full reload remounts AuthProvider, which re-fetches the now-valid
-        // session — the same as manually entering the dashboard URL, which
-        // works.
+        // Full reload, not router.push: AuthProvider fetches the session once
+        // on mount and better-auth's getSession() returns a stale null right
+        // after signIn, so client-side nav bounces back to /login.
         window.location.assign("/dashboard");
       }
     } catch {
@@ -45,9 +40,15 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-sm liquid-glass-strong p-8 space-y-6">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-bold text-liquid-text">Welcome back</h1>
+      <div className="w-full max-w-sm liquid-glass-strong p-8 space-y-6 animate-fade-rise">
+        <div className="space-y-3 text-center">
+          <div className="flex justify-center">
+            <div
+              className="w-12 h-12 rounded-2xl bg-gradient-to-br from-liquid-accent to-sky-400 shadow-lg shadow-liquid-accent/30"
+              aria-hidden="true"
+            />
+          </div>
+          <h1 className="text-2xl font-bold text-liquid-text tracking-tight">Welcome back</h1>
           <p className="text-sm text-liquid-text-muted">
             Sign in to your Momentum account
           </p>

@@ -16,12 +16,8 @@ interface FinalGoalsSectionProps {
   onDelete: (goalId: string) => Promise<void>;
 }
 
-/**
- * Standalone final-goals checklist. These are free-text, user-defined items
- * set up during Start Challenge and checked off manually anytime during the
- * season. They are NOT scored by the rating engine — just done/not-done — so
- * this section is visually and logically separate from the rating system.
- */
+/** Free-text final-goals checklist: done/not-done, not scored by the rating
+ * engine, so kept visually separate from the rating system. */
 export function FinalGoalsSection({
   seasonId,
   goals,

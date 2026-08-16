@@ -82,7 +82,7 @@ export function BottomSheet({
       aria-describedby={description ? "sheet-desc" : undefined}
     >
       <div
-        className="absolute inset-0 bg-black/60 animate-backdrop-fade"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-backdrop-fade"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -96,10 +96,10 @@ export function BottomSheet({
         )}
         tabIndex={-1}
       >
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 p-6 pb-4 border-b border-liquid-border bg-inherit">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 p-6 pb-4 border-b border-liquid-border bg-inherit backdrop-blur-xl">
           <div className="space-y-1">
             {title && (
-              <h2 id="sheet-title" className="text-xl font-semibold text-liquid-text">
+              <h2 id="sheet-title" className="text-xl font-semibold text-liquid-text tracking-tight">
                 {title}
               </h2>
             )}
@@ -111,7 +111,7 @@ export function BottomSheet({
           </div>
           <button
             onClick={onClose}
-            className="focus-ring rounded-lg p-2 -mr-2 -mt-1 text-liquid-text-muted hover:text-liquid-text hover:bg-white/[0.06] transition-colors"
+            className="focus-ring rounded-xl p-2 -mr-2 -mt-1 text-liquid-text-muted hover:text-liquid-text hover:bg-white/[0.08] transition-all duration-200"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" aria-hidden="true" />

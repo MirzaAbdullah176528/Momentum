@@ -25,16 +25,14 @@ interface TaskModalProps {
   projects: ProjectDTO[];
   task?: TaskDTO | null;
   defaultProjectId?: string;
-  /** When true (and editing), the task's normally-locked fields
-   * (target/unit/importanceWeight) become editable. This is the season-day-1
-   * unlock window; false on every other day and when there's no active season. */
+  /** Season-day-1 unlock: when true (and editing), the normally-locked fields
+   * (target/unit/importanceWeight/scaleType) become editable. False on every
+   * other day and when there's no active season. */
   canEditLockedFields?: boolean;
 }
 
 const HH_MM_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-// Human-readable labels + hints for each scoring scale, shown in the modal's
-// scale selector. Order follows SCALE_TYPES (target, limit, avoid, restriction).
 const SCALE_OPTIONS = [
   {
     value: "target",
@@ -68,8 +66,6 @@ export function TaskModal({
   canEditLockedFields = false
 }: TaskModalProps) {
   const isEditing = Boolean(task);
-  // Locked fields are only editable when editing an existing task during the
-  // season-day-1 unlock window.
   const lockedFieldsEditable = isEditing && canEditLockedFields;
   const [projectId, setProjectId] = useState(defaultProjectId ?? "");
   const [title, setTitle] = useState("");

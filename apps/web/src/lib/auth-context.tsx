@@ -21,7 +21,7 @@ const AuthContext = createContext<AuthContextValue>({
   loading: true,
   error: null,
   refresh: async () => {
-    // Replaced by AuthProvider implementation
+    // Stub — the real implementation is provided by AuthProvider below.
   }
 });
 

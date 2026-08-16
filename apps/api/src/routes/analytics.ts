@@ -37,9 +37,8 @@ analytics.get("/daily-rating-time-series", async (c) => {
   }
 
   if (!season) {
-    // No active season is a normal state (e.g. before a user starts their
-    // first challenge). Return null instead of 404 so the UI can render its
-    // empty state rather than an error.
+    // No active season is a normal pre-challenge state — return null so the UI
+    // renders its empty state rather than an error.
     return ok<DailyRatingTimeSeriesDTO | null>(c, null);
   }
 

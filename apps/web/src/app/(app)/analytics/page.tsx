@@ -47,15 +47,15 @@ export default function AnalyticsPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-bold text-liquid-text">Analytics</h1>
+      <header className="space-y-2 animate-fade-rise">
+        <h1 className="text-2xl font-bold text-liquid-text tracking-tight">Analytics</h1>
         <p className="text-sm text-liquid-text-muted">
           Track your trends and project completion over the current season.
         </p>
       </header>
 
       <section
-        className="liquid-glass p-6 space-y-4"
+        className="liquid-glass p-6 space-y-4 animate-fade-rise"
         aria-labelledby="trend-heading"
       >
         <div className="flex items-center justify-between">
@@ -116,10 +116,13 @@ export default function AnalyticsPage() {
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "rgba(11, 14, 28, 0.95)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: "12px",
-                    color: "#fff"
+                    backgroundColor: "rgba(11, 14, 28, 0.85)",
+                    backdropFilter: "blur(20px)",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    borderRadius: "14px",
+                    boxShadow: "0 10px 36px rgba(0,0,0,0.4)",
+                    color: "#fff",
+                    fontSize: "12px"
                   }}
                   labelStyle={{ color: "rgba(255,255,255,0.7)" }}
                 />
@@ -127,9 +130,9 @@ export default function AnalyticsPage() {
                   type="monotone"
                   dataKey="rating"
                   stroke="#7c5cff"
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   dot={{ fill: "#7c5cff", r: 3 }}
-                  activeDot={{ r: 5 }}
+                  activeDot={{ r: 5, strokeWidth: 0 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -193,12 +196,15 @@ export default function AnalyticsPage() {
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "rgba(11, 14, 28, 0.95)",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      borderRadius: "12px",
-                      color: "#fff"
+                      backgroundColor: "rgba(11, 14, 28, 0.85)",
+                      backdropFilter: "blur(20px)",
+                      border: "1px solid rgba(255,255,255,0.14)",
+                      borderRadius: "14px",
+                      boxShadow: "0 10px 36px rgba(0,0,0,0.4)",
+                      color: "#fff",
+                      fontSize: "12px"
                     }}
-                    cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                    cursor={{ fill: "rgba(255,255,255,0.05)" }}
                   />
                   <Bar dataKey="completion" radius={[8, 8, 0, 0]}>
                     {projectChartData.map((entry, index) => (

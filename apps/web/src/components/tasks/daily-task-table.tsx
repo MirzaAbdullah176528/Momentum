@@ -212,7 +212,7 @@ function SortableTaskRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "liquid-glass-subtle p-4 flex items-center gap-3 transition-shadow",
+        "liquid-glass-subtle p-4 flex items-center gap-3 transition-all duration-200",
         isDragging && "dnd-dragging"
       )}
     >
@@ -248,7 +248,7 @@ function SortableTaskRow({
         </div>
       </div>
 
-      <div className="flex flex-col items-end gap-1">
+      <div className="flex flex-col items-end gap-1.5">
         <LogInput
           taskId={task.id}
           date={date}

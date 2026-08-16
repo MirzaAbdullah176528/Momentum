@@ -154,8 +154,8 @@ seasons.get("/current", async (c) => {
   const todayPkt = nowPktDateString();
   const season = await scoped.currentSeason(todayPkt);
 
-  // No active season is a normal state (the UI shows the Start Challenge
-  // flow), not an error — return null so the frontend doesn't treat it as one.
+  // No active season is a normal state — return null so the frontend shows the
+  // Start Challenge flow rather than treating it as an error.
   if (!season) return ok<CurrentSeasonDTO | null>(c, null);
 
   const dailyRatings = await computeDailyRatingsForRange(
@@ -289,7 +289,7 @@ seasons.post(
     const scoped = await createScopedDb(c.env.DB, c.get("userId"));
     const todayPkt = nowPktDateString();
 
-    // Guard: only when no active/upcoming season exists.
+    // Only when no active/upcoming season exists.
     const existing = await scoped.findActiveOrUpcomingSeason(todayPkt);
     if (existing) {
       return conflict(
@@ -418,8 +418,6 @@ seasons.delete("/:id", MUTATING_ENDPOINT_RATE_LIMIT, async (c) => {
   return ok(c, { id });
 });
 
-// --- Final goals (standalone checklist) ---
-
 seasons.post(
   "/:id/final-goals",
   MUTATING_ENDPOINT_RATE_LIMIT,
@@ -511,8 +509,6 @@ seasons.get("/:id/rating", async (c) => {
 
   return ok(c, result);
 });
-
-// --- Helpers ---
 
 /**
  * Computes the daily rating for every included day in `[startPktDate,

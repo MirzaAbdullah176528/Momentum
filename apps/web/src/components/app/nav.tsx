@@ -39,15 +39,15 @@ export function AppNav({ currentPath, session }: AppNavProps) {
     <>
       <header className="sticky top-0 z-30 px-4 pt-4">
         <nav
-          className="liquid-glass max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4"
+          className="liquid-glass max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4"
           aria-label="Main navigation"
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <div
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-liquid-accent to-sky-400"
+              className="w-8 h-8 rounded-xl bg-gradient-to-br from-liquid-accent to-sky-400 shadow-lg shadow-liquid-accent/30"
               aria-hidden="true"
             />
-            <span className="font-semibold text-liquid-text hidden sm:inline">
+            <span className="font-semibold text-liquid-text hidden sm:inline tracking-tight">
               Momentum
             </span>
           </div>
@@ -65,10 +65,10 @@ export function AppNav({ currentPath, session }: AppNavProps) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "focus-ring rounded-lg px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2",
+                    "focus-ring rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 flex items-center gap-2",
                     active
                       ? "bg-liquid-accent-soft text-liquid-accent"
-                      : "text-liquid-text-muted hover:text-liquid-text hover:bg-white/[0.04]"
+                      : "text-liquid-text-muted hover:text-liquid-text hover:bg-white/[0.06]"
                   )}
                   aria-current={active ? "page" : undefined}
                 >
@@ -86,7 +86,7 @@ export function AppNav({ currentPath, session }: AppNavProps) {
             <button
               onClick={handleSignOut}
               disabled={signingOut}
-              className="focus-ring rounded-lg p-2 text-liquid-text-muted hover:text-liquid-text hover:bg-white/[0.04] transition-colors"
+              className="focus-ring rounded-xl p-2 text-liquid-text-muted hover:text-liquid-text hover:bg-white/[0.06] transition-all duration-200"
               aria-label="Sign out"
             >
               {signingOut ? (
@@ -112,9 +112,9 @@ export function AppNav({ currentPath, session }: AppNavProps) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "focus-ring rounded-xl flex flex-col items-center gap-1 px-3 py-2 min-w-[44px] min-h-[44px] justify-center text-xs font-medium transition-colors",
+                  "focus-ring rounded-xl flex flex-col items-center gap-1 px-3 py-2 min-w-[44px] min-h-[44px] justify-center text-xs font-medium transition-all duration-200",
                   active
-                    ? "text-liquid-accent"
+                    ? "text-liquid-accent bg-liquid-accent-soft"
                     : "text-liquid-text-muted"
                 )}
                 aria-current={active ? "page" : undefined}

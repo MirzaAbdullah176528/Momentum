@@ -33,9 +33,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             error ? errorId : hint ? hintId : undefined
           }
           className={cn(
-            "w-full rounded-xl border border-liquid-border bg-white/[0.04] px-4 py-2.5 text-liquid-text placeholder:text-liquid-text-subtle",
-            "focus-ring transition-colors",
-            error && "border-liquid-danger/50",
+            "w-full rounded-xl border border-liquid-border bg-white/[0.05] px-4 py-2.5 text-liquid-text placeholder:text-liquid-text-subtle",
+            "transition-all duration-200 hover:bg-white/[0.07]",
+            "focus:border-liquid-accent/50 focus:bg-white/[0.07] focus:ring-2 focus:ring-liquid-accent/25 focus:outline-none",
+            error && "border-liquid-danger/50 focus:border-liquid-danger/60 focus:ring-liquid-danger/20",
             className
           )}
           {...props}
@@ -85,9 +86,10 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           className={cn(
-            "w-full rounded-xl border border-liquid-border bg-white/[0.04] px-4 py-2.5 text-liquid-text",
-            "focus-ring transition-colors",
-            error && "border-liquid-danger/50",
+            "w-full rounded-xl border border-liquid-border bg-white/[0.05] px-4 py-2.5 text-liquid-text",
+            "transition-all duration-200 hover:bg-white/[0.07]",
+            "focus:border-liquid-accent/50 focus:bg-white/[0.07] focus:ring-2 focus:ring-liquid-accent/25 focus:outline-none",
+            error && "border-liquid-danger/50 focus:border-liquid-danger/60 focus:ring-liquid-danger/20",
             className
           )}
           {...props}
@@ -145,9 +147,10 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             error ? errorId : hint ? hintId : undefined
           }
           className={cn(
-            "w-full rounded-xl border border-liquid-border bg-white/[0.04] px-4 py-2.5 text-liquid-text placeholder:text-liquid-text-subtle",
-            "focus-ring transition-colors resize-none",
-            error && "border-liquid-danger/50",
+            "w-full rounded-xl border border-liquid-border bg-white/[0.05] px-4 py-2.5 text-liquid-text placeholder:text-liquid-text-subtle",
+            "transition-all duration-200 hover:bg-white/[0.07] resize-none",
+            "focus:border-liquid-accent/50 focus:bg-white/[0.07] focus:ring-2 focus:ring-liquid-accent/25 focus:outline-none",
+            error && "border-liquid-danger/50 focus:border-liquid-danger/60 focus:ring-liquid-danger/20",
             className
           )}
           {...props}
