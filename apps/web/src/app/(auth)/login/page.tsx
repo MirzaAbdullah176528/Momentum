@@ -1,17 +1,13 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth";
-import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { refresh } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,14 +26,15 @@ export default function LoginPage() {
       if (result.error) {
         setError(result.error.message ?? "Invalid email or password.");
       } else {
-        // Refresh the shared session state BEFORE navigating so the (app)
-        // layout's auth guard sees an active session instead of the stale
-        // null it had at initial page load (AuthProvider doesn't remount on
-        // client-side navigation, so without this the dashboard bounces back
-        // to /login within a second).
-        await refresh();
-        router.push("/dashboard");
-        router.refresh();
+        // Hard-navigate (full page load) instead of client-side router.push.
+        // The shared <AuthProvider> fetches the session once on mount; a
+        // client-side navigation does not remount it, and better-auth's client
+        // getSession() returns a stale null right after signIn (it cached the
+        // pre-login null), so router.push("/dashboard") bounces back to /login.
+        // A full reload remounts AuthProvider, which re-fetches the now-valid
+        // session — the same as manually entering the dashboard URL, which
+        // works.
+        window.location.assign("/dashboard");
       }
     } catch {
       setError("Could not reach the server. Please try again.");
