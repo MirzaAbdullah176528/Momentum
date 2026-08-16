@@ -14,11 +14,9 @@ export const WEEKDAY_LONG_LABELS = [
   "Saturday"
 ] as const;
 
-/**
- * Bit N (0 = Sunday .. 6 = Saturday, matching `Date#getDay()`) is set when that
+/** Bit N (0 = Sunday .. 6 = Saturday, matching Date#getDay()) is set when that
  * weekday counts toward the challenge. Excluded days never count toward the
- * average. A value of 0 means "no days" and is not a valid challenge config.
- */
+ * average. 0 means "no days" and is not a valid challenge config. */
 export function isWeekdayIncluded(includedDays: number, dayIndex: number): boolean {
   return ((includedDays >> dayIndex) & 1) === 1;
 }

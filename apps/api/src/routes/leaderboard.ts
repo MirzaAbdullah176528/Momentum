@@ -52,8 +52,8 @@ leaderboard.get("/", LEADERBOARD_RATE_LIMIT, async (c) => {
   const result = await fetchLeaderboard(db, {
     seasonStartDate: startDate,
     seasonEndDate: endDate,
-    // Each season row carries its own includedDays; this default is used only
-    // if a row is missing the value (legacy data).
+    // Each season row carries its own includedDays; this default is only used
+    // for legacy rows missing the value.
     includedDays: INCLUDED_DAYS_ALL,
     limit,
     offset

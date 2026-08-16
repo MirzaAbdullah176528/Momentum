@@ -34,13 +34,9 @@ const DEFAULT_WEEKLY: WeeklyRewardDraft[] = [1, 2, 3, 4].map(() => ({
   rewardText: ""
 }));
 
-/**
- * The single Start Challenge setup flow. Collects, in one form: which weekdays
- * count toward the challenge, the overall target rating + reward, the 4 weekly
- * targets/rewards (decided upfront, not editable once the season starts), and
- * the standalone final-goals checklist. On submit the backend resolves the
- * 28-day start date from the user's tasks.
- */
+/** Start Challenge setup flow: weekdays, overall target + reward, the 4 weekly
+ * targets/rewards (decided upfront, immutable once started), and the final-goals
+ * checklist. The backend resolves the 28-day start date from the user's tasks. */
 export function StartChallengeForm({
   onSubmit,
   onCancel,
@@ -130,12 +126,12 @@ export function StartChallengeForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="liquid-glass-strong p-6 space-y-6"
+      className="liquid-glass-strong p-6 space-y-6 animate-fade-rise"
       aria-labelledby="start-challenge-heading"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h2 id="start-challenge-heading" className="text-xl font-bold text-liquid-text">
+          <h2 id="start-challenge-heading" className="text-xl font-bold text-liquid-text tracking-tight">
             Start a 4-Week Challenge
           </h2>
           <p className="text-sm text-liquid-text-muted">
@@ -148,13 +144,12 @@ export function StartChallengeForm({
           type="button"
           onClick={onCancel}
           aria-label="Cancel"
-          className="text-liquid-text-subtle hover:text-liquid-text"
+          className="focus-ring rounded-xl p-2 -mr-2 -mt-1 text-liquid-text-subtle hover:text-liquid-text hover:bg-white/[0.06] transition-all duration-200"
         >
           <X className="w-5 h-5" aria-hidden="true" />
         </button>
       </div>
 
-      {/* Included days */}
       <fieldset className="space-y-3">
         <div>
           <legend className="text-sm font-medium text-liquid-text-secondary">
@@ -167,7 +162,6 @@ export function StartChallengeForm({
         <IncludedDaysPicker value={includedDays} onChange={setIncludedDays} />
       </fieldset>
 
-      {/* Overall reward */}
       <fieldset className="space-y-3">
         <div className="flex items-center gap-2">
           <Trophy className="w-4 h-4 text-liquid-accent" aria-hidden="true" />
@@ -197,7 +191,6 @@ export function StartChallengeForm({
         />
       </fieldset>
 
-      {/* Weekly rewards */}
       <fieldset className="space-y-3">
         <div>
           <h3 className="text-sm font-medium text-liquid-text-secondary">
@@ -247,7 +240,6 @@ export function StartChallengeForm({
         </div>
       </fieldset>
 
-      {/* Final goals */}
       <fieldset className="space-y-3">
         <div>
           <h3 className="text-sm font-medium text-liquid-text-secondary">

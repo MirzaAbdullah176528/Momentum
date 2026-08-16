@@ -30,7 +30,6 @@ export default function SignupPage() {
       if (result.error) {
         setError(result.error.message ?? "Could not create account.");
       } else {
-
         window.location.assign("/dashboard");
       }
     } catch (err) {
@@ -42,9 +41,15 @@ export default function SignupPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-sm liquid-glass-strong p-8 space-y-6">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-bold text-liquid-text">Create account</h1>
+      <div className="w-full max-w-sm liquid-glass-strong p-8 space-y-6 animate-fade-rise">
+        <div className="space-y-3 text-center">
+          <div className="flex justify-center">
+            <div
+              className="w-12 h-12 rounded-2xl bg-gradient-to-br from-liquid-accent to-sky-400 shadow-lg shadow-liquid-accent/30"
+              aria-hidden="true"
+            />
+          </div>
+          <h1 className="text-2xl font-bold text-liquid-text tracking-tight">Create account</h1>
           <p className="text-sm text-liquid-text-muted">
             Start tracking your daily momentum
           </p>

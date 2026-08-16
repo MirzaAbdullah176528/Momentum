@@ -83,29 +83,18 @@ export function computeTaskScore(input: TaskScoreInput): number {
   const scale = resolveScaleType(input);
 
   if (scale === "avoid") {
-    // A binary "did you avoid the thing today?" toggle. Avoiding
-    // (actualValue === 0) earns the full importance weight; slipping
-    // (actualValue > 0) scores 0; an unlogged day (null) scores 0, consistent
-    // with the incomplete-task rule. Note this is checked BEFORE the generic
-    // null/<=0 guard below — for an avoid task, 0 is the "success" value, not
-    // a "no progress" value, so it must not be collapsed to 0.
+    // Binary "did you avoid it?": 0 ⇒ full weight, >0 ⇒ 0. Checked BEFORE the
+    // generic null/<=0 guard below because here 0 is the success value, not
+    // "no progress". null (unlogged) ⇒ 0 (incomplete-task rule).
     if (actualValue === null) return 0;
     return actualValue === 0 ? importanceWeight : 0;
   }
 
   if (scale === "restriction") {
-    // Target is an upper cap. For a count unit the rule is strict pass/fail:
-    // at or under the cap ⇒ full weight, over by even one ⇒ 0 (no partial
-    // credit). For every other unit the penalty is graduated, using the same
-    // formula as "limit" (overageRatio = max(0, actual-target)/target ⇒
-    // weight * clamp(1 - overageRatio, 0, 1)). In both branches meeting the
-    // target exactly (actualValue === targetValue) scores the full weight.
-    //
-    // This is checked BEFORE the shared null/<=0 guard below because, for a
-    // restriction task, a *logged* 0 ("I did zero of the restricted thing")
-    // is a success — well under the cap — and earns the full weight. Only an
-    // unlogged day (null) scores 0 (the incomplete-task rule). This mirrors the
-    // avoid-scale ordering and does not change any other scale's behavior.
+    // Upper cap, checked BEFORE the generic null/<=0 guard because a *logged* 0
+    // ("did zero of the restricted thing") is a success, not no-progress. Only
+    // an unlogged null ⇒ 0. count unit ⇒ strict pass/fail at/under the cap; any
+    // other unit ⇒ graduated, same formula as "limit".
     if (actualValue === null) return 0;
     if (input.unit === "count") {
       return actualValue <= targetValue ? importanceWeight : 0;
@@ -115,15 +104,13 @@ export function computeTaskScore(input: TaskScoreInput): number {
     return Math.max(0, importanceWeight * (1 - overageRatio));
   }
 
-  // target + limit: no logged value (or a non-positive one) means no progress,
-  // hence 0. (restriction is handled above, before this guard, because for it
-  // a logged 0 is a success rather than no-progress.)
+  // target + limit: no logged value (or a non-positive one) ⇒ no progress ⇒ 0.
+  // (restriction handled above because a logged 0 is a success for it.)
   if (actualValue === null || actualValue <= 0) return 0;
 
   if (scale === "limit") {
-    // Target is an upper cap. Meeting it (or coming in under) earns the full
-    // weight; any overage reduces the score by weight * overageRatio, so even
-    // a small overage is a visible reduction (never silently rounded away).
+    // Upper cap: at/under target ⇒ full weight; overage reduces by
+    // weight * overageRatio (a small overage is a real reduction).
     if (actualValue <= targetValue) return importanceWeight;
     const overageRatio = (actualValue - targetValue) / targetValue;
     return Math.max(0, importanceWeight * (1 - overageRatio));

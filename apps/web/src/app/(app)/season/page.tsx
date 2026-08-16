@@ -7,6 +7,7 @@ import { nowPktDateString } from "@momentum/rating-engine";
 import type { StartChallengeInputDTO } from "@momentum/shared-types";
 import { RatingBadge, RatingCell } from "@/components/ui/rating";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ErrorState, EmptyState } from "@/components/ui/states";
 import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
 import { StartChallengeForm } from "@/components/season/start-challenge-form";
@@ -103,36 +104,36 @@ export default function SeasonPage() {
     );
   }
 
-  // No active season → show the Start Challenge flow.
+  // No active season → Start Challenge flow.
   if (!season) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-bold text-liquid-text">Season</h1>
+        <header className="space-y-2 animate-fade-rise">
+          <h1 className="text-2xl font-bold text-liquid-text tracking-tight">Season</h1>
           <p className="text-sm text-liquid-text-muted">
             No active challenge. Start a 28-day challenge to begin tracking.
           </p>
         </header>
 
         {!showStartForm ? (
-          <section className="liquid-glass-strong p-8 space-y-4 text-center">
+          <section className="liquid-glass-strong p-8 space-y-4 text-center animate-fade-rise">
             <EmptyState
               icon={<CalendarDays className="w-6 h-6 text-liquid-accent" />}
               title="No active challenge"
               message="Pick your days, set 4 weekly targets, an overall goal, and a final-goals checklist — then begin."
             />
             <div className="flex justify-center">
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="lg"
                 onClick={() => {
                   setStartError(null);
                   setShowStartForm(true);
                 }}
-                className="inline-flex items-center gap-2 h-12 px-6 rounded-xl text-base font-medium bg-liquid-accent text-white shadow-lg shadow-liquid-accent/30 hover:bg-liquid-accent/90 active:scale-[0.98] transition-all"
               >
                 <Rocket className="w-4 h-4" aria-hidden="true" />
                 Start Challenge
-              </button>
+              </Button>
             </div>
           </section>
         ) : (
@@ -157,16 +158,16 @@ export default function SeasonPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-      <header className="space-y-2">
+      <header className="space-y-2 animate-fade-rise">
         <p className="text-sm text-liquid-text-muted">
           {season.season.startDate} → {season.season.endDate} ·{" "}
           {describeIncludedDays(season.season.includedDays)}
         </p>
-        <h1 className="text-2xl font-bold text-liquid-text">Season Overview</h1>
+        <h1 className="text-2xl font-bold text-liquid-text tracking-tight">Season Overview</h1>
       </header>
 
       <section
-        className="liquid-glass-strong p-6 space-y-4"
+        className="liquid-glass-strong p-6 space-y-4 animate-fade-rise"
         aria-labelledby="season-summary"
       >
         <h2 id="season-summary" className="sr-only">
@@ -205,7 +206,7 @@ export default function SeasonPage() {
             aria-label={`Season progress: ${progressPct.toFixed(1)}% of target rating`}
           >
             <div
-              className="h-full rounded-full bg-gradient-to-r from-liquid-accent to-sky-400 transition-all duration-500"
+              className="h-full rounded-full bg-gradient-to-r from-liquid-accent to-sky-400 transition-all duration-700 ease-out"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -237,7 +238,7 @@ export default function SeasonPage() {
         </div>
       </section>
 
-      {/* 5-indicator reward row: Week 1, Week 2, Week 3, Week 4, Overall */}
+      {/* Reward indicators */}
       <section
         className="liquid-glass p-6 space-y-4"
         aria-labelledby="rewards-heading"
@@ -259,7 +260,7 @@ export default function SeasonPage() {
         />
       </section>
 
-      {/* Standalone final goals checklist */}
+      {/* Final goals checklist */}
       <FinalGoalsSection
         seasonId={season.season.id}
         goals={season.finalGoals}

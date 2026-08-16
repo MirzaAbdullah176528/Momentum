@@ -17,12 +17,8 @@ const STATUS_META: Record<
   not_achieved: { label: "Not achieved", tone: "text-liquid-text-subtle", Icon: Circle }
 };
 
-/**
- * A single green-signal indicator cell. Green when achieved, a dim circle when
- * concluded-but-not-achieved, and an in-progress dot while the window is still
- * open. Used both for weekly rewards and the overall (monthly) reward so they
- * read as one consistent row.
- */
+/** Single reward indicator cell: green when achieved, dim when concluded but
+ * not achieved, an in-progress dot while the window is still open. */
 function RewardIndicatorCell({
   status,
   title,
@@ -73,11 +69,8 @@ interface RewardIndicatorRowProps {
   monthlyIndicator: MonthlyRewardIndicatorDTO;
 }
 
-/**
- * Renders the 5-indicator reward row: Week 1, Week 2, Week 3, Week 4, Overall.
- * Each is independently green (achieved), in-progress, or dim
- * (concluded-but-not-achieved).
- */
+/** 5-indicator reward row: Week 1–4 + Overall, each independently
+ * achieved / in-progress / dim. */
 export function RewardIndicatorRow({
   weeklyIndicators,
   monthlyIndicator

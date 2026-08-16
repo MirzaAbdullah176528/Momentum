@@ -28,8 +28,8 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-bold text-liquid-text">Settings</h1>
+      <header className="space-y-2 animate-fade-rise">
+        <h1 className="text-2xl font-bold text-liquid-text tracking-tight">Settings</h1>
         <p className="text-sm text-liquid-text-muted">
           Manage your profile, season target, and projects.
         </p>
@@ -368,7 +368,6 @@ function ProjectsSection({
       await api.projects.delete(id);
       onDeleted();
     } catch {
-      // Error handled by parent
     } finally {
       setDeleting(null);
     }
