@@ -45,11 +45,7 @@ export interface SeasonRatingInput {
   readonly dailyRatings: readonly SeasonDayRating[];
   readonly startPktDate: PktDateString;
   readonly endPktDate: PktDateString;
-  /**
-   * 7-bit included-days bitmask (bit N = `Date#getDay()`, 0 = Sunday .. 6 =
-   * Saturday). Excluded days are dropped entirely — they never count toward
-   * the average (not even as a 0), generalizing the legacy `weekdaysOnly`.
-   */
+
   readonly includedDays: number;
 }
 
@@ -61,11 +57,7 @@ export interface SeasonRatingResult {
   readonly dailyRatings: readonly DailyRatingResult[];
 }
 
-/**
- * Resolves the scoring scale for a task. An explicit `scaleType` always wins;
- * otherwise "calories" defaults to "limit" (a daily intake cap, where going
- * over should hurt) and every other unit defaults to "target".
- */
+
 export function resolveScaleType(input: {
   scaleType?: ScaleType;
   unit?: TaskUnit;
@@ -193,7 +185,7 @@ export function computeDailyRatingForTasks(
     if (task.scheduledForPktDate !== firstDate) {
       throw new Error(
         `computeDailyRatingForTasks expects all tasks to share the same scheduledForPktDate. ` +
-          `Found "${task.scheduledForPktDate}" alongside "${firstDate}".`
+        `Found "${task.scheduledForPktDate}" alongside "${firstDate}".`
       );
     }
   }

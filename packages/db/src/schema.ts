@@ -110,11 +110,6 @@ export const season = sqliteTable(
     endDate: text("end_date").notNull(),
     targetRating: real("target_rating").notNull(),
     rewardText: text("reward_text").notNull(),
-    /**
-     * 7-bit included-days bitmask (bit N = `Date#getDay()`,
-     * 0 = Sunday .. 6 = Saturday). Replaces the legacy `weekdays_only`
-     * boolean. Excluded days never count toward a season/weekly average.
-     */
     includedDays: integer("included_days")
       .notNull()
       .default(DEFAULT_INCLUDED_DAYS),

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { createScopedDb } from "@momentum/db";
+import { createScopedDb, TaskUnit } from "@momentum/db";
 import {
   computeSeasonRating,
   computeDailyRating,
@@ -37,7 +37,8 @@ import type {
   StartChallengeInputDTO,
   StartChallengeResultDTO,
   StartChallengeEligibilityDTO,
-  ApiResponse
+  ApiResponse,
+  ScaleType
 } from "@momentum/shared-types";
 import type { AppContext } from "../types.js";
 import { ok, notFound, validationError, conflict } from "../lib/http.js";
@@ -154,8 +155,7 @@ seasons.get("/current", async (c) => {
   const todayPkt = nowPktDateString();
   const season = await scoped.currentSeason(todayPkt);
 
-  // No active season is a normal state — return null so the frontend shows the
-  // Start Challenge flow rather than treating it as an error.
+
   if (!season) return ok<CurrentSeasonDTO | null>(c, null);
 
   const dailyRatings = await computeDailyRatingsForRange(
@@ -510,11 +510,7 @@ seasons.get("/:id/rating", async (c) => {
   return ok(c, result);
 });
 
-/**
- * Computes the daily rating for every included day in `[startPktDate,
- * endPktDate]`. Excluded days are omitted entirely (never counted, not even as
- * a 0), matching the generalized included-days rule.
- */
+
 async function computeDailyRatingsForRange(
   scoped: Awaited<ReturnType<typeof createScopedDb>>,
   startPktDate: string,
@@ -535,8 +531,11 @@ async function computeDailyRatingsForRange(
       tasksWithLogs.map(({ task, log }) => ({
         actualValue: log?.actualValue ?? null,
         targetValue: task.targetValue,
-        importanceWeight: task.importanceWeight
-      })),
+        importanceWeight: task.importanceWeight,
+        unit: task.unit as TaskUnit,
+        scaleType: task.scaleType as ScaleType | undefined
+      }
+      )),
       dateKey
     );
     dailyRatings.push({
@@ -550,12 +549,7 @@ async function computeDailyRatingsForRange(
   return dailyRatings;
 }
 
-/**
- * Computes one indicator per week (1..4). A week is "in progress" until every
- * included day within its range has concluded; only then is its average
- * compared to its target to yield "achieved" / "not_achieved". The average is
- * computed from that week's daily ratings (excluded days never count).
- */
+
 function computeWeeklyRewardIndicators(
   seasonStartDate: string,
   includedDays: number,

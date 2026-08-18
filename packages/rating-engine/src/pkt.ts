@@ -137,11 +137,7 @@ export function eachPktDayInRange(
   return days;
 }
 
-/**
- * Returns the PKT days in `[startInclusive, endInclusive]` whose weekday bit is
- * set in `includedDays`. Excluded days are omitted entirely (they never count
- * toward an average). Use this in place of the legacy `weekdaysOnly` overload.
- */
+
 export function eachPktDayInRangeWithIncludedDays(
   startInclusive: Date,
   endInclusive: Date,
