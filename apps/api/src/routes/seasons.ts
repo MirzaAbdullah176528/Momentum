@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { createScopedDb, TaskUnit } from "@momentum/db";
+import { createScopedDb } from "@momentum/db";
 import {
   computeSeasonRating,
   computeDailyRating,
@@ -38,6 +38,7 @@ import type {
   StartChallengeResultDTO,
   StartChallengeEligibilityDTO,
   ApiResponse,
+  TaskUnit,
   ScaleType
 } from "@momentum/shared-types";
 import type { AppContext } from "../types.js";
@@ -279,7 +280,6 @@ seasons.post(
     }
     const input: StartChallengeInputDTO = parsed.data;
 
-    // The 4 weekly rewards must cover weeks 1..4 exactly once.
     const weekNumbers = new Set(input.weeklyRewards.map((w) => w.weekNumber));
     const expectedWeeks = new Set([1, 2, 3, 4]);
     if (weekNumbers.size !== 4 || ![...expectedWeeks].every((w) => weekNumbers.has(w))) {
@@ -298,7 +298,7 @@ seasons.post(
       );
     }
 
-    // Resolve start date from the user's tasks (PKT), with the 1-hour grace.
+
     const scheduledStarts = await scoped.scheduledStartsForPktDate(todayPkt);
     const { startDate, endDate } = resolveChallengeStartDate(
       todayPkt,
@@ -533,9 +533,8 @@ async function computeDailyRatingsForRange(
         targetValue: task.targetValue,
         importanceWeight: task.importanceWeight,
         unit: task.unit as TaskUnit,
-        scaleType: task.scaleType as ScaleType | undefined
-      }
-      )),
+        scaleType: task.scaleType as ScaleType
+      })),
       dateKey
     );
     dailyRatings.push({
