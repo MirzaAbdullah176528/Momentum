@@ -53,7 +53,7 @@ export function AppNav({ currentPath, session }: AppNavProps) {
           </div>
 
           <div
-            className="flex items-center gap-1"
+            className="hidden md:flex items-center gap-1"
             role="navigation"
             aria-label="Primary"
           >
@@ -100,7 +100,7 @@ export function AppNav({ currentPath, session }: AppNavProps) {
       </header>
 
       <nav
-        className="fixed bottom-0 left-0 right-0 z-30 px-4 pb-4 md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-30 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:hidden"
         aria-label="Mobile navigation"
       >
         <div className="liquid-glass-strong rounded-2xl px-2 py-2 flex items-center justify-around">
