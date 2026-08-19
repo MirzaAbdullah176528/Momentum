@@ -41,7 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         Skip to main content
       </a>
       <AppNav currentPath={pathname} session={session} />
-      <main id="main-content" className="relative z-10 pb-24 md:pb-8">
+      <main id="main-content" className="relative z-10 pb-[max(7rem,calc(env(safe-area-inset-bottom)+5.5rem))] md:pb-8">
         {children}
       </main>
     </div>
