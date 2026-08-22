@@ -4,13 +4,31 @@ import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Momentum",
+  metadataBase: new URL("https://momentum-by-abdullah-hassan.vercel.app"),
+  title: {
+    default: "Momentum",
+    template: "%s | Momentum"
+  },
   description:
     "A task and habit tracker that computes a daily 0.0–10.0 rating from logged tasks.",
   applicationName: "Momentum",
   authors: [{ name: "Momentum" }],
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }]
+  },
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "Momentum",
+    title: "Momentum",
+    description:
+      "A task and habit tracker that computes a daily 0.0–10.0 rating from logged tasks."
+  },
+  twitter: {
+    card: "summary",
+    title: "Momentum",
+    description:
+      "A task and habit tracker that computes a daily 0.0–10.0 rating from logged tasks."
   }
 };
 
