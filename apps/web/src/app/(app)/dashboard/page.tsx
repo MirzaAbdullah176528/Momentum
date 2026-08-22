@@ -43,10 +43,11 @@ export default function DashboardPage() {
     setRefreshKey((k) => k + 1);
   }, []);
 
+  const ratingRefetch = ratingData.refetch;
   const handleLogUpdated = useCallback(() => {
-    ratingData.refetch();
+    ratingRefetch();
     setLiveMessage("Rating updated.");
-  }, [ratingData]);
+  }, [ratingRefetch]);
 
   const projects = projectsData.data ?? [];
   const tasks = tasksData.data ?? [];

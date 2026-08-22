@@ -2,8 +2,10 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode
 } from "react";
@@ -20,9 +22,7 @@ const AuthContext = createContext<AuthContextValue>({
   session: null,
   loading: true,
   error: null,
-  refresh: async () => {
-    // Stub — the real implementation is provided by AuthProvider below.
-  }
+  refresh: () => Promise.resolve()
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     try {
       setError(null);
       const result = await authClient.getSession();
@@ -45,16 +45,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [refresh]);
+
+  const value = useMemo(
+    () => ({ session, loading, error, refresh }),
+    [session, loading, error, refresh]
+  );
 
   return (
-    <AuthContext.Provider value={{ session, loading, error, refresh }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
 }
 
