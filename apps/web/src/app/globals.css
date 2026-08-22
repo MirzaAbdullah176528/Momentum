@@ -136,6 +136,32 @@ body {
   animation: orb-drift-3 calc(var(--duration-orb) * 0.8) ease-in-out infinite;
 }
 
+@media (max-width: 767px) {
+  .bg-orb {
+    filter: blur(50px);
+    opacity: 0.35;
+  }
+
+  .bg-orb-1 {
+    width: 70vw;
+    height: 70vw;
+  }
+
+  .bg-orb-2 {
+    width: 62vw;
+    height: 62vw;
+  }
+
+  .bg-orb-3 {
+    width: 55vw;
+    height: 55vw;
+  }
+}
+
+.bg-orbs-paused .bg-orb {
+  animation-play-state: paused;
+}
+
 
 /* backdrop-filter is applied inside @supports blocks: the production CSS
    minifier dedupes paired prefixed/unprefixed backdrop-filter declarations
