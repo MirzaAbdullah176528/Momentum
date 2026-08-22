@@ -45,6 +45,17 @@ export default function RootLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <link
+          rel="preconnect"
+          href="https://momentum-api.ajjh564356165649.workers.dev"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="dns-prefetch"
+          href="https://momentum-api.ajjh564356165649.workers.dev"
+        />
+      </head>
       <body className="antialiased">
         <AuthProvider>
           <div className="bg-orbs" aria-hidden="true">
