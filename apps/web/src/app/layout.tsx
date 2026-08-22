@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import Script from "next/script";
 import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
@@ -34,6 +35,9 @@ export default function RootLayout({
             <div className="bg-orb bg-orb-3" />
           </div>
           <div className="relative z-10">{children}</div>
+          <Script id="pause-orbs-when-hidden" strategy="afterInteractive">
+            {`document.addEventListener("visibilitychange",function(){var o=document.querySelector(".bg-orbs");if(o)o.classList.toggle("bg-orbs-paused",document.hidden)})`}
+          </Script>
         </AuthProvider>
       </body>
     </html>
